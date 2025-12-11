@@ -13,6 +13,7 @@ from models.knowledge import Knowledge
 from services.ai_service import ai_service
 from services.embedding_service import embedding_service
 from services.telegram_service import get_telegram_service
+from services.distillation_pipeline import distillation_pipeline
 import logging
 
 logger = logging.getLogger(__name__)
@@ -141,28 +142,13 @@ class KnowledgeService:
         await db.commit()
         await _notify("notify_step_complete", knowledge.id, "validating", "内容验证通过")
         
-        # Step 2: Image Analysis (if applicable)
-        if has_images:
-            knowledge.processing_status = "analyzing_images"
-            await _notify("notify_step_start", knowledge.id, "analyzing_images", f"正在分析 {len(knowledge.images)} 张图片...")
-            steps.append({
-                "step": "analyzing_images",
-                "status": "in_progress",
-                "message": f"正在分析 {len(knowledge.images)} 张图片...",
-                "timestamp": datetime.utcnow().isoformat()
-            })
-            knowledge.processing_steps = steps
-            await db.commit()
-            
-            logger.info(f"Analyzing {len(knowledge.images)} images for knowledge {knowledge.id}")
-        
-        # Step 3: Distilling with AI (handles both text and images)
+        # Step 2-5: Multi-stage Distillation Pipeline
+        # 使用多阶段蒸馏管道：提取 -> 分析 -> 搜索 -> 验证 -> 归纳
         knowledge.processing_status = "distilling"
-        await _notify("notify_step_start", knowledge.id, "distilling", "AI 正在蒸馏知识...")
         steps.append({
             "step": "distilling",
             "status": "in_progress",
-            "message": "AI 正在蒸馏知识..." + (" (含图片分析)" if has_images else ""),
+            "message": "多阶段 AI 蒸馏中（提取→分析→搜索→验证→归纳）...",
             "timestamp": datetime.utcnow().isoformat()
         })
         knowledge.processing_steps = steps
@@ -173,17 +159,17 @@ class KnowledgeService:
         if knowledge.source_type == "image":
             content_for_distill = ""  # Let AI extract from images
         
-        # Distill with AI - pass images for analysis
-        distilled = await ai_service.distill_knowledge(
+        # Run multi-stage distillation pipeline
+        # 多阶段处理会通过 Telegram 发送每个阶段的进度
+        distilled = await distillation_pipeline.run(
             content=content_for_distill,
-            context=None,
-            images=knowledge.images if has_images else None
+            images=knowledge.images if has_images else None,
+            knowledge_id=knowledge.id
         )
         
         # Check if there was an error
         if distilled.get("error"):
             error_msg = distilled.get("error", "蒸馏失败")
-            await _notify("notify_step_failed", knowledge.id, "distilling", error_msg)
             steps.append({
                 "step": "distilling",
                 "status": "failed",
@@ -198,7 +184,7 @@ class KnowledgeService:
             await db.refresh(knowledge)
             return knowledge
         
-        # Update with distilled results
+        # Update with distilled results (enhanced fields from pipeline)
         knowledge.title = distilled.get("title", knowledge.title)
         knowledge.summary = distilled.get("summary", "")
         knowledge.key_points = distilled.get("key_points", [])
@@ -216,16 +202,7 @@ class KnowledgeService:
             # Store the AI-extracted content as reference
             knowledge.original_content = f"[从图片提取的内容]\n\n{distilled.get('summary', '')}\n\n关键点:\n" + "\n".join(f"- {kp}" for kp in distilled.get('key_points', []))
         
-        if has_images:
-            await _notify("notify_step_complete", knowledge.id, "analyzing_images", "图片分析完成", knowledge.title[:100])
-            steps.append({
-                "step": "analyzing_images",
-                "status": "completed",
-                "message": "图片分析完成",
-                "timestamp": datetime.utcnow().isoformat()
-            })
-        
-        await _notify("notify_step_complete", knowledge.id, "distilling", "知识蒸馏完成", f"标题: {knowledge.title[:80]}")
+        # Pipeline 完成所有蒸馏阶段
         steps.append({
             "step": "distilling",
             "status": "completed",
