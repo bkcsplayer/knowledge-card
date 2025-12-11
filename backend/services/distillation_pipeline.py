@@ -51,7 +51,7 @@ class DistillationPipeline:
         knowledge_id: Optional[int] = None
     ) -> Dict[str, Any]:
         """
-        运行完整的蒸馏管道
+        运行完整的蒸馏管道（带回退机制）
         
         Args:
             content: 原始文本内容
@@ -62,6 +62,21 @@ class DistillationPipeline:
             完整的知识卡片数据
         """
         kid = knowledge_id or 0
+        
+        # 首先尝试简化版的单次蒸馏（更可靠）
+        await self._notify(f"🧪 #{kid} | 开始 AI 知识蒸馏...")
+        
+        try:
+            result = await self._simple_distill(content, images, kid)
+            if result and not result.get("error"):
+                await self._notify(f"🎉 #{kid} | 蒸馏完成!\n📝 {result.get('title', '')[:50]}\n🏷️ {', '.join(result.get('tags', [])[:5])}")
+                return result
+        except Exception as e:
+            logger.warning(f"Simple distill failed, trying pipeline: {e}")
+        
+        # 如果简化版失败，尝试多阶段管道
+        await self._notify(f"⚙️ #{kid} | 启用多阶段深度分析...")
+        
         pipeline_result = {
             "stages_completed": [],
             "raw_extractions": {},
@@ -71,7 +86,6 @@ class DistillationPipeline:
         
         try:
             # ========== 阶段 1: 提取 ==========
-            await self._notify(f"📥 #{kid} | 阶段1/5: 提取原始信息...")
             extraction = await self._stage_extract(content, images)
             pipeline_result["raw_extractions"]["extract"] = extraction
             pipeline_result["stages_completed"].append("extract")
@@ -79,36 +93,26 @@ class DistillationPipeline:
             if extraction.get("error"):
                 raise Exception(f"提取失败: {extraction.get('error')}")
             
-            await self._notify(f"✅ #{kid} | 提取完成: {extraction.get('title', '未知')[:30]}...")
+            await self._notify(f"✅ #{kid} | 提取完成")
             
             # ========== 阶段 2: 分析 ==========
-            await self._notify(f"🔬 #{kid} | 阶段2/5: 深度分析...")
             analysis = await self._stage_analyze(extraction)
             pipeline_result["raw_extractions"]["analyze"] = analysis
             pipeline_result["stages_completed"].append("analyze")
             
-            await self._notify(f"✅ #{kid} | 分析完成: 识别到 {analysis.get('content_type', '未知')} 类型")
-            
             # ========== 阶段 3: 搜索补充 ==========
-            await self._notify(f"🔍 #{kid} | 阶段3/5: 搜索补充信息...")
             enriched = await self._stage_search(extraction, analysis)
             pipeline_result["raw_extractions"]["search"] = enriched
             pipeline_result["stages_completed"].append("search")
             
-            if enriched.get("found_urls"):
-                await self._notify(f"✅ #{kid} | 发现关联: {', '.join(enriched.get('found_urls', [])[:2])}")
-            
             # ========== 阶段 4: 验证 ==========
-            await self._notify(f"✓ #{kid} | 阶段4/5: 验证信息准确性...")
             verification = await self._stage_verify(extraction, analysis, enriched)
             pipeline_result["raw_extractions"]["verify"] = verification
             pipeline_result["stages_completed"].append("verify")
             
-            confidence = verification.get("confidence", 0)
-            await self._notify(f"✅ #{kid} | 验证完成: 置信度 {int(confidence * 100)}%")
+            confidence = verification.get("confidence", 0.5)
             
             # ========== 阶段 5: 归纳总结 ==========
-            await self._notify(f"📝 #{kid} | 阶段5/5: 归纳生成知识卡片...")
             final = await self._stage_synthesize(extraction, analysis, enriched, verification)
             pipeline_result["final_result"] = final
             pipeline_result["stages_completed"].append("synthesize")
@@ -120,7 +124,7 @@ class DistillationPipeline:
                     tags.append("已验证")
                 final["tags"] = tags
             
-            await self._notify(f"🎉 #{kid} | 蒸馏完成!\n标题: {final.get('title', '')[:50]}\n标签: {', '.join(final.get('tags', [])[:5])}")
+            await self._notify(f"🎉 #{kid} | 深度分析完成!\n📝 {final.get('title', '')[:50]}")
             
             return final
             
@@ -128,18 +132,85 @@ class DistillationPipeline:
             error_msg = str(e)
             pipeline_result["errors"].append(error_msg)
             logger.error(f"Pipeline failed: {e}")
-            await self._notify(f"❌ #{kid} | 蒸馏失败: {error_msg[:100]}")
+            await self._notify(f"⚠️ #{kid} | 管道异常，使用基础结果")
             
-            # 返回基础结果
+            # 返回提取阶段的基础结果
+            ext = pipeline_result["raw_extractions"].get("extract", {})
             return {
-                "error": error_msg,
-                "title": pipeline_result["raw_extractions"].get("extract", {}).get("title", "处理失败"),
-                "summary": pipeline_result["raw_extractions"].get("extract", {}).get("summary", "内容处理失败"),
+                "title": ext.get("title", "未知内容"),
+                "summary": ext.get("raw_summary", content[:500] if content else "图片内容"),
+                "key_points": ext.get("detected_features", []),
+                "tags": ext.get("detected_names", []),
+                "category": "未分类",
+                "difficulty": "中级",
+                "action_items": [],
+                "repo_url": (ext.get("detected_urls", []) or [None])[0]
+            }
+    
+    async def _simple_distill(self, content: str, images: Optional[List[str]], kid: int) -> Dict[str, Any]:
+        """
+        简化版单次蒸馏 - 更可靠
+        """
+        # 处理图片
+        actual_content = content
+        if images and len(images) > 0:
+            image_text = await ai_service.analyze_image(
+                images, 
+                context="请详细描述图片中的所有内容。如果是GitHub页面，提取仓库名、描述、star数、技术栈等。如果是代码，说明代码功能。"
+            )
+            if image_text:
+                actual_content = f"{image_text}\n\n{content}" if content else image_text
+        
+        if not actual_content or len(actual_content.strip()) < 10:
+            return {"error": "没有有效内容"}
+        
+        prompt = """你是知识管理专家。请分析以下内容并生成知识卡片。
+
+输出 JSON 格式：
+{
+    "title": "简洁的标题",
+    "summary": "150-250字的完整摘要，包含：是什么、核心功能、适用场景",
+    "key_points": ["关键点1", "关键点2", "关键点3", "关键点4", "关键点5"],
+    "tags": ["标签1", "标签2", "标签3"],
+    "category": "分类（技术/工具/教程/概念）",
+    "difficulty": "难度（入门/中级/高级）",
+    "action_items": ["可执行的行动1", "行动2"],
+    "usage_example": "使用示例代码或命令（如适用）",
+    "deployment_guide": "部署步骤（如果是项目）",
+    "is_open_source": true/false,
+    "repo_url": "GitHub地址（如有）"
+}
+
+要求：
+1. 如果是 GitHub 项目，必须提取仓库地址
+2. 提供实用的使用示例
+3. 标签要精准
+4. 摘要要全面"""
+
+        messages = [
+            {"role": "system", "content": prompt},
+            {"role": "user", "content": f"请分析以下内容：\n\n{actual_content[:4000]}"}
+        ]
+        
+        result = await ai_service._call_api(messages, temperature=0.3)
+        
+        if not result:
+            return {"error": "AI 未返回结果"}
+        
+        try:
+            return self._parse_json(result)
+        except Exception as e:
+            logger.error(f"Simple distill parse error: {e}")
+            # 尝试从响应中提取有用信息
+            return {
+                "title": actual_content[:80],
+                "summary": actual_content[:300],
                 "key_points": [],
                 "tags": [],
                 "category": "未分类",
-                "difficulty": "未知",
-                "action_items": []
+                "difficulty": "中级",
+                "action_items": [],
+                "error": f"解析失败: {str(e)}"
             }
     
     async def _stage_extract(self, content: str, images: Optional[List[str]]) -> Dict[str, Any]:
