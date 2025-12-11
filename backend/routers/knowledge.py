@@ -1,6 +1,7 @@
 """
 Knowledge API Router
 CRUD endpoints for knowledge management
+Supports: text content, URL, images, files
 """
 
 from fastapi import APIRouter, HTTPException, Depends, Query
@@ -16,12 +17,19 @@ router = APIRouter(prefix="/api/v1/knowledge", tags=["Knowledge"])
 
 # Request/Response Models
 class KnowledgeCreate(BaseModel):
-    """Create knowledge request"""
-    content: str
+    """
+    Create knowledge request
+    
+    支持多种输入方式（至少提供一种）：
+    - content: 文本内容
+    - source_url: 网页 URL（未来支持自动抓取）
+    - images: 图片路径列表（AI 将分析图片内容）
+    """
+    content: Optional[str] = ""  # 文本内容（可选）
     title: Optional[str] = None
-    source_type: str = "manual"
-    source_url: Optional[str] = None
-    images: Optional[List[str]] = None
+    source_type: str = "manual"  # manual, url, image, file
+    source_url: Optional[str] = None  # URL 来源
+    images: Optional[List[str]] = None  # 图片路径列表
     auto_process: bool = True
 
 
@@ -48,6 +56,13 @@ class KnowledgeResponse(BaseModel):
     category: Optional[str]
     difficulty: Optional[str]
     action_items: List[str]
+    usage_example: Optional[str] = None
+    deployment_guide: Optional[str] = None
+    is_open_source: bool = False
+    repo_url: Optional[str] = None
+    images: List[str] = []
+    processing_status: str = "pending"
+    processing_steps: List[Dict[str, Any]] = []
     source_type: str
     source_url: Optional[str]
     is_processed: bool
@@ -69,20 +84,42 @@ async def create_knowledge(
     """
     Create a new knowledge entry
     
-    - **content**: The raw content to process and store
-    - **title**: Optional title (auto-generated if not provided)
-    - **source_type**: Type of source (manual, url, file, api)
-    - **source_url**: URL of source if applicable
-    - **auto_process**: Whether to automatically distill with AI (default: true)
+    支持多种输入方式（至少提供一种）：
+    - **content**: 文本内容（可以为空，如果提供了图片）
+    - **source_url**: URL 来源
+    - **images**: 图片路径列表，AI 将自动分析图片内容
+    - **source_type**: 来源类型 (manual, url, image, file)
+    - **auto_process**: 是否自动 AI 处理（默认: true）
+    
+    示例：
+    1. 仅文本: {"content": "你的内容..."}
+    2. 仅图片: {"images": ["/api/v1/upload/images/xxx.jpg"], "source_type": "image"}
+    3. 文本+图片: {"content": "补充说明", "images": ["..."]}
     """
-    if not request.content.strip():
-        raise HTTPException(status_code=400, detail="Content cannot be empty")
+    # 验证：至少要有 content 或 images
+    has_content = request.content and len(request.content.strip()) > 0
+    has_images = request.images and len(request.images) > 0
+    has_url = request.source_url and len(request.source_url.strip()) > 0
+    
+    if not has_content and not has_images and not has_url:
+        raise HTTPException(
+            status_code=400, 
+            detail="请提供内容、图片或 URL 中的至少一项"
+        )
+    
+    # 根据输入自动判断 source_type
+    if has_images and not has_content:
+        source_type = "image"
+    elif has_url and not has_content:
+        source_type = "url"
+    else:
+        source_type = request.source_type
     
     knowledge = await knowledge_service.create(
         db=db,
-        content=request.content,
+        content=request.content or "",
         title=request.title,
-        source_type=request.source_type,
+        source_type=source_type,
         source_url=request.source_url,
         images=request.images,
         auto_process=request.auto_process
@@ -203,4 +240,3 @@ async def reprocess_knowledge(
         return knowledge.to_dict()
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
-
