@@ -269,6 +269,9 @@ function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [graphData, setGraphData] = useState<any>(null)
   const [graphLoading, setGraphLoading] = useState(false)
+  const [lastKnowledgeCount, setLastKnowledgeCount] = useState(0)
+  const [hasNewData, setHasNewData] = useState(false)
+  const [autoRefresh, setAutoRefresh] = useState(true)
 
   // 检查登录状态
   useEffect(() => {
@@ -286,6 +289,41 @@ function App() {
       fetchKnowledgeList()
     }
   }, [isAuthenticated])
+
+  // 🔄 自动刷新 - 每5秒检查新数据
+  useEffect(() => {
+    if (!isAuthenticated || !autoRefresh) return
+    
+    const checkForUpdates = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/api/v1/knowledge/stats`)
+        const data = await res.json()
+        
+        if (data.total !== lastKnowledgeCount) {
+          if (lastKnowledgeCount > 0) {
+            // 有新数据，自动刷新列表
+            setHasNewData(true)
+            fetchKnowledgeList()
+            fetchStats()
+            
+            // 3秒后清除提示
+            setTimeout(() => setHasNewData(false), 3000)
+          }
+          setLastKnowledgeCount(data.total)
+        }
+      } catch (e) {
+        // 静默处理错误
+      }
+    }
+    
+    // 首次执行
+    checkForUpdates()
+    
+    // 设置定时器
+    const interval = setInterval(checkForUpdates, 5000)
+    
+    return () => clearInterval(interval)
+  }, [isAuthenticated, autoRefresh, lastKnowledgeCount])
 
   const handleLogin = () => {
     setIsAuthenticated(true)
@@ -542,6 +580,26 @@ function App() {
   // Render Dashboard
   const renderDashboard = () => (
     <div className="dashboard">
+      {/* 新数据提示 */}
+      {hasNewData && (
+        <div className="new-data-alert">
+          🔔 有新数据！已自动刷新
+        </div>
+      )}
+      
+      {/* 自动刷新开关 */}
+      <div className="auto-refresh-toggle">
+        <label>
+          <input 
+            type="checkbox" 
+            checked={autoRefresh} 
+            onChange={(e) => setAutoRefresh(e.target.checked)}
+          />
+          <span className="toggle-label">🔄 自动刷新 {autoRefresh ? '开' : '关'}</span>
+        </label>
+        {autoRefresh && <span className="refresh-indicator">● 实时监听中</span>}
+      </div>
+      
       <div className="stats-grid">
         <div className="stat-card primary" onClick={() => navigateTo('list')}>
           <div className="stat-number">{stats?.total || 0}</div>

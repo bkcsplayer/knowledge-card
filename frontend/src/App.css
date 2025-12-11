@@ -2100,3 +2100,126 @@ body {
     align-self: center;
   }
 }
+
+/* ========================================
+   Auto Refresh & New Data Alert Styles
+   ======================================== */
+
+.new-data-alert {
+  background: linear-gradient(135deg, var(--accent-success), #00a86b);
+  color: white;
+  padding: 12px 20px;
+  border-radius: var(--radius-md);
+  text-align: center;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  animation: slideDown 0.3s ease, pulse 1s ease-in-out 2;
+  box-shadow: 0 4px 15px rgba(0, 230, 118, 0.3);
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+.auto-refresh-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-card);
+  padding: 10px 16px;
+  border-radius: var(--radius-md);
+  margin-bottom: 1rem;
+  border: 1px solid var(--border-color);
+}
+
+.auto-refresh-toggle label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.auto-refresh-toggle input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent-primary);
+  cursor: pointer;
+}
+
+.toggle-label {
+  color: var(--text-primary);
+  font-size: 0.9rem;
+}
+
+.refresh-indicator {
+  color: var(--accent-success);
+  font-size: 0.8rem;
+  animation: blink 2s infinite;
+}
+
+@keyframes blink {
+  0%, 50%, 100% {
+    opacity: 1;
+  }
+  25%, 75% {
+    opacity: 0.4;
+  }
+}
+
+/* Processing notification toast */
+.processing-toast {
+  position: fixed;
+  bottom: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--bg-card);
+  border: 1px solid var(--accent-primary);
+  padding: 12px 24px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  z-index: 1000;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.processing-toast .toast-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text-primary);
+}
+
+.processing-toast .spinner {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
