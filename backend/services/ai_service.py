@@ -64,23 +64,36 @@ class AIService:
     async def _image_to_base64(self, image_path: str) -> Optional[str]:
         """Convert local image file to base64"""
         try:
-            # Handle both absolute and relative paths
+            # Handle different path formats
             if image_path.startswith('/api/v1/upload/images/'):
                 # Extract filename and build local path
+                # Docker container path: /app/uploads/images/filename
                 filename = image_path.split('/')[-1]
-                local_path = Path(settings.upload_dir) / filename
+                local_path = Path("/app/uploads/images") / filename
             elif image_path.startswith('http'):
                 # Download remote image
                 async with httpx.AsyncClient() as client:
                     response = await client.get(image_path)
                     response.raise_for_status()
                     return base64.b64encode(response.content).decode('utf-8')
-            else:
+            elif image_path.startswith('/'):
+                # Absolute path
                 local_path = Path(image_path)
+            else:
+                # Relative path - try multiple locations
+                local_path = Path("/app/uploads/images") / image_path
+                if not local_path.exists():
+                    local_path = Path("/app/uploads") / image_path
+                if not local_path.exists():
+                    local_path = Path(image_path)
+            
+            logger.info(f"Looking for image at: {local_path}")
             
             if local_path.exists():
                 with open(local_path, 'rb') as f:
-                    return base64.b64encode(f.read()).decode('utf-8')
+                    content = f.read()
+                    logger.info(f"Successfully loaded image: {local_path} ({len(content)} bytes)")
+                    return base64.b64encode(content).decode('utf-8')
             else:
                 logger.warning(f"Image file not found: {local_path}")
                 return None
