@@ -1,0 +1,67 @@
+services:
+  # PostgreSQL with pgvector extension
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: kd_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-kd_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kd_password}
+      POSTGRES_DB: ${POSTGRES_DB:-knowledge_distillery}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-kd_user} -d ${POSTGRES_DB:-knowledge_distillery}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # FastAPI Backend with hot-reload
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: kd_backend
+    restart: unless-stopped
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    volumes:
+      - ./backend:/app  # Hot reload: code changes apply instantly
+      - uploads_data:/app/uploads  # Persistent uploads storage
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env  # Load all environment variables from .env file
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-kd_user}:${POSTGRES_PASSWORD:-kd_password}@db:5432/${POSTGRES_DB:-knowledge_distillery}
+      PYTHONDONTWRITEBYTECODE: 1
+      PYTHONUNBUFFERED: 1
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # React + Vite Frontend with hot-reload
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: kd_frontend
+    restart: unless-stopped
+    command: npm run dev -- --host
+    volumes:
+      - ./frontend:/app                # Hot reload: code changes apply instantly
+      - /app/node_modules              # Volume hack: preserve node_modules inside container
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:8000
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+    driver: local
+  uploads_data:
+    driver: local
+

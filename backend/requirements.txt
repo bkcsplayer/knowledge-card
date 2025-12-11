@@ -1,0 +1,34 @@
+# FastAPI Framework
+fastapi==0.109.2
+uvicorn[standard]==0.27.1
+
+# Async PostgreSQL
+asyncpg==0.29.0
+sqlalchemy[asyncio]==2.0.25
+
+# pgvector support
+pgvector==0.2.5
+
+# Environment & Utilities
+python-dotenv==1.0.1
+pydantic==2.6.1
+pydantic-settings==2.2.1
+
+# CORS support
+python-multipart==0.0.9
+
+# Email support
+email-validator==2.1.0  # Required for pydantic EmailStr validation
+
+# HTTP client for AI API calls
+httpx==0.27.0
+
+# Vector operations
+numpy==1.26.4
+
+# Background task scheduling
+apscheduler==3.10.4
+
+# Async file operations
+aiofiles==23.2.1
+
