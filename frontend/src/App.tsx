@@ -267,6 +267,8 @@ function App() {
   const [viewMode, setViewMode] = useState<'cards' | 'list'>('cards')
   const [filterCategory, setFilterCategory] = useState<string>('')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [graphData, setGraphData] = useState<any>(null)
+  const [graphLoading, setGraphLoading] = useState(false)
 
   // 检查登录状态
   useEffect(() => {
@@ -977,10 +979,7 @@ function App() {
     </div>
   )
 
-  // Render Enhanced Knowledge Graph
-  const [graphData, setGraphData] = useState<any>(null)
-  const [graphLoading, setGraphLoading] = useState(false)
-  
+  // Fetch graph data
   const fetchGraphData = async () => {
     setGraphLoading(true)
     try {
