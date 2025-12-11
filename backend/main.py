@@ -17,10 +17,14 @@ logger = logging.getLogger(__name__)
 from database import init_db
 
 # Import routers
-from routers import email, ai, knowledge, search, reports, upload, learning
+from routers import email, ai, knowledge, search, reports, upload, learning, telegram, graph, verify
 
 # Import scheduler
 from services.scheduler_service import init_scheduler, shutdown_scheduler
+
+# Import telegram service
+from services.telegram_service import init_telegram_service
+from config import settings
 
 
 @asynccontextmanager
@@ -40,6 +44,24 @@ async def lifespan(app: FastAPI):
         logger.info("✅ Scheduler started")
     except Exception as e:
         logger.error(f"❌ Scheduler initialization failed: {e}")
+    
+    # Initialize Telegram service
+    try:
+        if settings.telegram_bot_token:
+            tg_service = init_telegram_service(
+                settings.telegram_bot_token,
+                settings.telegram_chat_id
+            )
+            if tg_service.enabled:
+                logger.info("✅ Telegram bot initialized")
+                if settings.telegram_chat_id:
+                    await tg_service.notify_system_status("🟢 在线", "Knowledge Distillery 后端已启动")
+            else:
+                logger.warning("⚠️ Telegram bot token provided but service not enabled")
+        else:
+            logger.info("ℹ️ Telegram notifications not configured")
+    except Exception as e:
+        logger.error(f"❌ Telegram initialization failed: {e}")
     
     yield
     
@@ -80,6 +102,9 @@ app.include_router(search.router)
 app.include_router(reports.router)
 app.include_router(upload.router)
 app.include_router(learning.router)
+app.include_router(telegram.router)
+app.include_router(graph.router)
+app.include_router(verify.router)
 
 
 @app.get("/")

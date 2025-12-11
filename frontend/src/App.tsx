@@ -79,14 +79,24 @@ const DifficultyStars = ({ difficulty }: { difficulty: string | null }) => {
 const RichKnowledgeCard = ({ 
   knowledge, 
   onClick,
+  onVerify
 }: { 
   knowledge: Knowledge
   onClick: () => void
+  onVerify?: (id: number) => void
 }) => {
   const k = knowledge
+  const isVerified = k.tags?.includes('已验证')
   
   return (
-    <div className="rich-knowledge-card" onClick={onClick}>
+    <div className={`rich-knowledge-card ${isVerified ? 'verified' : ''}`} onClick={onClick}>
+      {/* 验证徽章 */}
+      {isVerified && (
+        <div className="verified-badge" title="此知识已通过交叉验证">
+          <span>✓ 已验证</span>
+        </div>
+      )}
+      
       {/* 头部 */}
       <div className="card-top">
         <div className="card-category-badge">
@@ -121,13 +131,25 @@ const RichKnowledgeCard = ({
       {/* 底部信息 */}
       <div className="card-bottom">
         <div className="card-tags">
-          {k.tags?.slice(0, 3).map((tag, i) => (
+          {k.tags?.filter(t => t !== '已验证').slice(0, 3).map((tag, i) => (
             <span key={i} className="card-tag">{tag}</span>
           ))}
         </div>
         <div className="card-meta">
           {k.is_open_source && <span className="opensource-icon" title="开源项目">🔓</span>}
           {k.is_processed && <span className="processed-icon" title="已蒸馏">✓</span>}
+          {!isVerified && k.is_processed && onVerify && (
+            <button 
+              className="verify-btn" 
+              title="验证此知识"
+              onClick={(e) => {
+                e.stopPropagation()
+                onVerify(k.id)
+              }}
+            >
+              🔍
+            </button>
+          )}
         </div>
       </div>
 
@@ -488,6 +510,28 @@ function App() {
     setMobileMenuOpen(false)
   }
 
+  // 验证知识
+  const handleVerifyKnowledge = async (knowledgeId: number) => {
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/verify/knowledge/${knowledgeId}?auto_tag=true`, {
+        method: 'POST'
+      })
+      const data = await res.json()
+      
+      if (data.is_verified) {
+        alert(`✅ 验证通过！置信度: ${(data.confidence * 100).toFixed(0)}%\n\n${data.verification_summary}`)
+      } else {
+        alert(`⚠️ ${data.verification_summary}\n置信度: ${(data.confidence * 100).toFixed(0)}%`)
+      }
+      
+      // 刷新列表
+      fetchKnowledgeList()
+    } catch (e) {
+      console.error('Verify failed:', e)
+      alert('验证失败')
+    }
+  }
+
   // 如果未登录，显示登录页面
   if (!isAuthenticated) {
     return <LoginPage onLogin={handleLogin} />
@@ -564,6 +608,7 @@ function App() {
                 key={k.id} 
                 knowledge={k} 
                 onClick={() => openKnowledgeDetail(k)}
+                onVerify={handleVerifyKnowledge}
               />
             ))}
           </div>
@@ -720,6 +765,7 @@ function App() {
               key={k.id} 
               knowledge={k} 
               onClick={() => openKnowledgeDetail(k)}
+              onVerify={handleVerifyKnowledge}
             />
           ))}
         </div>
@@ -931,62 +977,208 @@ function App() {
     </div>
   )
 
-  // Render Knowledge Graph (Simple version)
-  const renderGraph = () => (
-    <div className="graph-view">
-      <h2>📊 知识图谱</h2>
-      <p className="form-hint">可视化知识点关联</p>
-      
-      <div className="graph-container">
-        <div className="graph-categories">
-          {Object.entries(stats?.categories || {}).map(([category, count]) => (
-            <div key={category} className="graph-category-node">
-              <div className="category-circle" style={{ 
-                width: Math.min(120, 50 + count * 12),
-                height: Math.min(120, 50 + count * 12)
-              }}>
-                <span className="category-name">{category}</span>
-                <span className="category-count">{count}</span>
-              </div>
-              <div className="category-items">
-                {knowledgeList
-                  .filter(k => k.category === category)
-                  .slice(0, 3)
-                  .map(k => (
-                    <div 
-                      key={k.id} 
-                      className="graph-knowledge-node"
-                      onClick={() => openKnowledgeDetail(k)}
-                    >
-                      {k.title.slice(0, 15)}...
+  // Render Enhanced Knowledge Graph
+  const [graphData, setGraphData] = useState<any>(null)
+  const [graphLoading, setGraphLoading] = useState(false)
+  
+  const fetchGraphData = async () => {
+    setGraphLoading(true)
+    try {
+      const res = await fetch(`${API_BASE}/api/v1/graph/data?similarity_threshold=0.6`)
+      const data = await res.json()
+      setGraphData(data)
+    } catch (e) {
+      console.error('Failed to fetch graph data:', e)
+    } finally {
+      setGraphLoading(false)
+    }
+  }
+  
+  const renderGraph = () => {
+    // 获取图谱数据
+    if (!graphData && !graphLoading) {
+      fetchGraphData()
+    }
+    
+    // 从知识列表提取标签统计
+    const tagStats = knowledgeList.reduce((acc, k) => {
+      (k.tags || []).forEach(tag => {
+        acc[tag] = (acc[tag] || 0) + 1
+      })
+      return acc
+    }, {} as Record<string, number>)
+    
+    // 排序标签
+    const sortedTags = Object.entries(tagStats)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 30)
+    
+    return (
+      <div className="graph-view">
+        <h2>📊 知识图谱</h2>
+        <p className="form-hint">可视化知识点关联与分布</p>
+        
+        {graphLoading ? (
+          <div className="loading">🔄 加载图谱数据...</div>
+        ) : (
+          <>
+            {/* 分类分布 */}
+            <div className="graph-section">
+              <h3>📂 分类分布</h3>
+              <div className="category-distribution">
+                {Object.entries(stats?.categories || {}).map(([category, count]) => {
+                  const percentage = stats?.total ? Math.round((count / stats.total) * 100) : 0
+                  const verifiedInCategory = knowledgeList
+                    .filter(k => k.category === category && k.tags?.includes('已验证')).length
+                  
+                  return (
+                    <div key={category} className="category-bar-item">
+                      <div className="category-bar-header">
+                        <span className="category-name">{category}</span>
+                        <span className="category-count">{count} 条 ({percentage}%)</span>
+                      </div>
+                      <div className="category-bar-container">
+                        <div 
+                          className="category-bar-fill" 
+                          style={{ width: `${percentage}%` }}
+                        >
+                          {verifiedInCategory > 0 && (
+                            <span className="verified-portion" 
+                              style={{ width: `${(verifiedInCategory / count) * 100}%` }}
+                              title={`${verifiedInCategory} 条已验证`}
+                            />
+                          )}
+                        </div>
+                      </div>
+                      <div className="category-bar-items">
+                        {knowledgeList
+                          .filter(k => k.category === category)
+                          .slice(0, 4)
+                          .map(k => (
+                            <span 
+                              key={k.id} 
+                              className={`mini-tag ${k.tags?.includes('已验证') ? 'verified' : ''}`}
+                              onClick={() => openKnowledgeDetail(k)}
+                              title={k.title}
+                            >
+                              {k.tags?.includes('已验证') && '✓ '}
+                              {k.title.slice(0, 12)}...
+                            </span>
+                          ))}
+                      </div>
                     </div>
-                  ))}
+                  )
+                })}
               </div>
             </div>
-          ))}
-        </div>
-      </div>
 
-      <div className="graph-legend">
-        <h4>标签云</h4>
-        <div className="tag-cloud">
-          {Array.from(new Set(knowledgeList.flatMap(k => k.tags || []))).slice(0, 20).map((tag, i) => {
-            const count = knowledgeList.filter(k => k.tags?.includes(tag)).length
-            return (
-              <span 
-                key={i} 
-                className="cloud-tag"
-                style={{ fontSize: `${Math.min(1.3, 0.8 + count * 0.1)}rem` }}
-                onClick={() => { setSearchTerm(tag); navigateTo('list'); handleSearch(); }}
-              >
-                {tag}
-              </span>
-            )
-          })}
-        </div>
+            {/* 知识关联网络 */}
+            {graphData?.edges && graphData.edges.filter((e: any) => e.type === 'related').length > 0 && (
+              <div className="graph-section">
+                <h3>🔗 知识关联</h3>
+                <p className="section-hint">基于语义相似度自动发现的知识关联</p>
+                <div className="connections-list">
+                  {graphData.edges
+                    .filter((e: any) => e.type === 'related')
+                    .slice(0, 10)
+                    .map((edge: any, i: number) => {
+                      const sourceNode = graphData.nodes.find((n: any) => n.id === edge.source)
+                      const targetNode = graphData.nodes.find((n: any) => n.id === edge.target)
+                      if (!sourceNode || !targetNode) return null
+                      
+                      return (
+                        <div key={i} className="connection-item">
+                          <span 
+                            className="connection-node"
+                            onClick={() => {
+                              const k = knowledgeList.find(k => k.id === parseInt(sourceNode.id.replace('k_', '')))
+                              if (k) openKnowledgeDetail(k)
+                            }}
+                          >
+                            {sourceNode.label}
+                          </span>
+                          <span className="connection-arrow">
+                            ↔️ {Math.round(edge.weight * 100)}%
+                          </span>
+                          <span 
+                            className="connection-node"
+                            onClick={() => {
+                              const k = knowledgeList.find(k => k.id === parseInt(targetNode.id.replace('k_', '')))
+                              if (k) openKnowledgeDetail(k)
+                            }}
+                          >
+                            {targetNode.label}
+                          </span>
+                        </div>
+                      )
+                    })}
+                </div>
+              </div>
+            )}
+
+            {/* 标签云 */}
+            <div className="graph-section">
+              <h3>🏷️ 标签云</h3>
+              <div className="tag-cloud enhanced">
+                {sortedTags.map(([tag, count]) => {
+                  const isVerifiedTag = tag === '已验证'
+                  return (
+                    <span 
+                      key={tag} 
+                      className={`cloud-tag ${isVerifiedTag ? 'verified-tag' : ''}`}
+                      style={{ 
+                        fontSize: `${Math.min(1.5, 0.85 + count * 0.08)}rem`,
+                        opacity: Math.min(1, 0.5 + count * 0.1)
+                      }}
+                      onClick={() => { 
+                        setSearchTerm(tag)
+                        navigateTo('list')
+                        setTimeout(() => fetchKnowledgeList(tag), 100)
+                      }}
+                    >
+                      {isVerifiedTag ? '✓ ' : ''}{tag}
+                      <sup className="tag-count">{count}</sup>
+                    </span>
+                  )
+                })}
+              </div>
+            </div>
+
+            {/* 统计摘要 */}
+            <div className="graph-section">
+              <h3>📈 统计摘要</h3>
+              <div className="stats-summary">
+                <div className="stat-item">
+                  <span className="stat-icon">📚</span>
+                  <span className="stat-value">{stats?.total || 0}</span>
+                  <span className="stat-label">总知识</span>
+                </div>
+                <div className="stat-item verified">
+                  <span className="stat-icon">✓</span>
+                  <span className="stat-value">
+                    {knowledgeList.filter(k => k.tags?.includes('已验证')).length}
+                  </span>
+                  <span className="stat-label">已验证</span>
+                </div>
+                <div className="stat-item">
+                  <span className="stat-icon">🔗</span>
+                  <span className="stat-value">
+                    {graphData?.edges?.filter((e: any) => e.type === 'related').length || 0}
+                  </span>
+                  <span className="stat-label">关联</span>
+                </div>
+                <div className="stat-item">
+                  <span className="stat-icon">🏷️</span>
+                  <span className="stat-value">{Object.keys(tagStats).length}</span>
+                  <span className="stat-label">标签</span>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       </div>
-    </div>
-  )
+    )
+  }
 
   return (
     <div className="app">

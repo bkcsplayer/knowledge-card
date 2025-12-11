@@ -456,6 +456,168 @@ class AIService:
                 "message": "Failed to connect to OpenRouter API",
                 "configured": True
             }
+    
+    async def analyze_evidence(self, claim: str, evidence: str) -> Dict[str, Any]:
+        """
+        分析证据是否支持或反驳某个声明
+        
+        Args:
+            claim: 待验证的声明/知识点
+            evidence: 相关证据/知识内容
+        
+        Returns:
+            Dict with relation (supports/conflicts/neutral) and explanation
+        """
+        system_prompt = """你是一个严谨的知识验证专家。你的任务是分析提供的证据是否支持、反驳或与给定声明无关。
+
+请按照以下 JSON 格式输出：
+{
+    "relation": "supports" | "conflicts" | "neutral",
+    "confidence": 0.0-1.0,
+    "explanation": "简短解释为什么这个证据支持/反驳/无关"
+}
+
+判断标准：
+- supports: 证据明确支持该声明的核心内容
+- conflicts: 证据与声明有明显矛盾
+- neutral: 证据与声明话题相关但不能直接支持或反驳
+
+务必保持客观，只有在有明确证据时才给出 supports 或 conflicts。"""
+
+        user_prompt = f"""待验证声明：
+{claim}
+
+相关证据：
+{evidence}
+
+请分析这个证据与声明的关系。"""
+
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
+        ]
+        
+        result = await self._call_api(messages, temperature=0.2)
+        
+        if not result:
+            return {"relation": "neutral", "confidence": 0.5, "explanation": "AI 分析失败"}
+        
+        try:
+            cleaned = result.strip()
+            if cleaned.startswith("```json"):
+                cleaned = cleaned[7:]
+            if cleaned.startswith("```"):
+                cleaned = cleaned[3:]
+            if cleaned.endswith("```"):
+                cleaned = cleaned[:-3]
+            
+            return json.loads(cleaned.strip())
+        except json.JSONDecodeError:
+            return {"relation": "neutral", "confidence": 0.5, "explanation": result[:200]}
+    
+    async def rag_answer(self, query: str, context_items: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """
+        RAG 风格的问答 - 基于检索到的知识生成回答
+        
+        Args:
+            query: 用户问题
+            context_items: 检索到的相关知识列表
+        
+        Returns:
+            Dict with answer, sources, and confidence
+        """
+        if not context_items:
+            return {
+                "answer": "抱歉，知识库中没有找到相关信息。",
+                "sources": [],
+                "confidence": 0.0,
+                "has_answer": False
+            }
+        
+        # 构建上下文
+        context_text = "\n\n".join([
+            f"【来源 {i+1}: {item.get('title', '未知')}】\n"
+            f"摘要: {item.get('summary', '')}\n"
+            f"关键点: {', '.join(item.get('key_points', []))}"
+            for i, item in enumerate(context_items[:5])
+        ])
+        
+        system_prompt = """你是 Knowledge Distillery 的智能助手，擅长基于知识库内容回答问题。
+
+回答要求：
+1. 基于提供的知识库内容回答，不要编造
+2. 如果知识库内容不足以完整回答，明确指出
+3. 引用具体来源（如"根据来源1..."）
+4. 提供实用的建议和下一步行动
+
+请以 JSON 格式输出：
+{
+    "answer": "完整的回答内容",
+    "used_sources": [1, 2],  // 使用了哪些来源
+    "confidence": 0.0-1.0,   // 回答的置信度
+    "suggestions": ["建议1", "建议2"],  // 后续建议
+    "missing_info": "如果有信息缺失，说明需要什么额外信息"
+}"""
+
+        user_prompt = f"""用户问题：{query}
+
+知识库相关内容：
+{context_text}
+
+请基于以上内容回答用户问题。"""
+
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
+        ]
+        
+        result = await self._call_api(messages, temperature=0.5)
+        
+        if not result:
+            return {
+                "answer": "AI 服务暂时不可用，请稍后再试。",
+                "sources": [],
+                "confidence": 0.0,
+                "has_answer": False
+            }
+        
+        try:
+            cleaned = result.strip()
+            if cleaned.startswith("```json"):
+                cleaned = cleaned[7:]
+            if cleaned.startswith("```"):
+                cleaned = cleaned[3:]
+            if cleaned.endswith("```"):
+                cleaned = cleaned[:-3]
+            
+            parsed = json.loads(cleaned.strip())
+            
+            # 添加来源详情
+            used_indices = parsed.get("used_sources", [])
+            sources = [
+                {
+                    "id": context_items[i-1].get("id"),
+                    "title": context_items[i-1].get("title"),
+                    "similarity": context_items[i-1].get("similarity", 0)
+                }
+                for i in used_indices if 0 < i <= len(context_items)
+            ]
+            
+            return {
+                "answer": parsed.get("answer", ""),
+                "sources": sources,
+                "confidence": parsed.get("confidence", 0.5),
+                "suggestions": parsed.get("suggestions", []),
+                "missing_info": parsed.get("missing_info"),
+                "has_answer": True
+            }
+        except json.JSONDecodeError:
+            return {
+                "answer": result,
+                "sources": [],
+                "confidence": 0.5,
+                "has_answer": True
+            }
 
 
 # Global AI service instance

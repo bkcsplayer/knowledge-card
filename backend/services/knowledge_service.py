@@ -12,9 +12,22 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from models.knowledge import Knowledge
 from services.ai_service import ai_service
 from services.embedding_service import embedding_service
+from services.telegram_service import get_telegram_service
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+async def _notify(method_name: str, *args, **kwargs):
+    """Helper to send Telegram notification if service is available"""
+    try:
+        service = get_telegram_service()
+        if service and service.enabled and service.chat_id:
+            method = getattr(service, method_name, None)
+            if method:
+                await method(*args, **kwargs)
+    except Exception as e:
+        logger.warning(f"Telegram notification failed: {e}")
 
 
 class KnowledgeService:
@@ -82,6 +95,9 @@ class KnowledgeService:
         
         logger.info(f"Created knowledge {knowledge.id}: has_content={has_content}, has_images={has_images}")
         
+        # Send Telegram notification
+        await _notify("notify_knowledge_created", knowledge.id, knowledge.title[:50], source_type)
+        
         # Auto-process with AI if requested
         if auto_process:
             knowledge = await self.process_with_ai(db, knowledge.id)
@@ -114,6 +130,7 @@ class KnowledgeService:
         
         # Step 1: Validating
         knowledge.processing_status = "validating"
+        await _notify("notify_step_start", knowledge.id, "validating", "正在验证内容...")
         steps.append({
             "step": "validating",
             "status": "completed",
@@ -122,10 +139,12 @@ class KnowledgeService:
         })
         knowledge.processing_steps = steps
         await db.commit()
+        await _notify("notify_step_complete", knowledge.id, "validating", "内容验证通过")
         
         # Step 2: Image Analysis (if applicable)
         if has_images:
             knowledge.processing_status = "analyzing_images"
+            await _notify("notify_step_start", knowledge.id, "analyzing_images", f"正在分析 {len(knowledge.images)} 张图片...")
             steps.append({
                 "step": "analyzing_images",
                 "status": "in_progress",
@@ -139,6 +158,7 @@ class KnowledgeService:
         
         # Step 3: Distilling with AI (handles both text and images)
         knowledge.processing_status = "distilling"
+        await _notify("notify_step_start", knowledge.id, "distilling", "AI 正在蒸馏知识...")
         steps.append({
             "step": "distilling",
             "status": "in_progress",
@@ -162,10 +182,12 @@ class KnowledgeService:
         
         # Check if there was an error
         if distilled.get("error"):
+            error_msg = distilled.get("error", "蒸馏失败")
+            await _notify("notify_step_failed", knowledge.id, "distilling", error_msg)
             steps.append({
                 "step": "distilling",
                 "status": "failed",
-                "message": distilled.get("error", "蒸馏失败"),
+                "message": error_msg,
                 "timestamp": datetime.utcnow().isoformat()
             })
             knowledge.processing_status = "failed"
@@ -195,6 +217,7 @@ class KnowledgeService:
             knowledge.original_content = f"[从图片提取的内容]\n\n{distilled.get('summary', '')}\n\n关键点:\n" + "\n".join(f"- {kp}" for kp in distilled.get('key_points', []))
         
         if has_images:
+            await _notify("notify_step_complete", knowledge.id, "analyzing_images", "图片分析完成", knowledge.title[:100])
             steps.append({
                 "step": "analyzing_images",
                 "status": "completed",
@@ -202,6 +225,7 @@ class KnowledgeService:
                 "timestamp": datetime.utcnow().isoformat()
             })
         
+        await _notify("notify_step_complete", knowledge.id, "distilling", "知识蒸馏完成", f"标题: {knowledge.title[:80]}")
         steps.append({
             "step": "distilling",
             "status": "completed",
@@ -212,6 +236,7 @@ class KnowledgeService:
         
         # Step 4: Generate embedding
         knowledge.processing_status = "embedding"
+        await _notify("notify_step_start", knowledge.id, "embedding", "正在生成向量嵌入...")
         steps.append({
             "step": "embedding",
             "status": "in_progress",
@@ -266,6 +291,15 @@ class KnowledgeService:
         await db.refresh(knowledge)
         
         logger.info(f"Completed processing knowledge {knowledge.id}: {knowledge.title}")
+        
+        # Send completion notification
+        await _notify(
+            "notify_knowledge_completed", 
+            knowledge.id, 
+            knowledge.title, 
+            knowledge.summary or "", 
+            knowledge.tags or []
+        )
         
         return knowledge
     

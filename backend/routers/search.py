@@ -147,6 +147,106 @@ async def semantic_search(
     )
 
 
+@router.post("/rag")
+async def rag_search(
+    request: SearchRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    RAG 风格搜索 - 检索增强生成
+    
+    适用于项目开发场景：
+    - 输入你的目标/问题
+    - 系统检索相关知识
+    - AI 基于知识库生成针对性回答和建议
+    
+    示例：
+    - "我要开发一个 Web3 DApp，需要学习什么？"
+    - "如何部署一个 React 项目？"
+    """
+    if not request.query.strip():
+        raise HTTPException(status_code=400, detail="Query cannot be empty")
+    
+    limit = min(max(request.limit, 1), 20)
+    
+    # Step 1: 检索相关知识
+    query_embedding = await embedding_service.get_embedding(request.query)
+    
+    context_items = []
+    
+    if query_embedding:
+        embedding_str = "[" + ",".join(map(str, query_embedding)) + "]"
+        
+        sql = text("""
+            SELECT 
+                id, title, summary, original_content, category, tags, key_points,
+                usage_example, deployment_guide,
+                1 - (embedding <=> :embedding::vector) as similarity
+            FROM knowledge
+            WHERE is_archived = false AND embedding IS NOT NULL
+            ORDER BY embedding <=> :embedding::vector
+            LIMIT :limit
+        """)
+        
+        result = await db.execute(
+            sql,
+            {"embedding": embedding_str, "limit": limit}
+        )
+        
+        for row in result.fetchall():
+            context_items.append({
+                "id": row.id,
+                "title": row.title,
+                "summary": row.summary,
+                "key_points": row.key_points or [],
+                "category": row.category,
+                "tags": row.tags or [],
+                "similarity": round(float(row.similarity), 4),
+                "usage_example": row.usage_example,
+                "deployment_guide": row.deployment_guide
+            })
+    
+    # Fallback to text search
+    if not context_items:
+        search_pattern = f"%{request.query}%"
+        stmt = (
+            select(Knowledge)
+            .where(Knowledge.is_archived == False)
+            .where(
+                Knowledge.title.ilike(search_pattern) |
+                Knowledge.summary.ilike(search_pattern) |
+                Knowledge.original_content.ilike(search_pattern)
+            )
+            .limit(limit)
+        )
+        
+        result = await db.execute(stmt)
+        for k in result.scalars().all():
+            context_items.append({
+                "id": k.id,
+                "title": k.title,
+                "summary": k.summary,
+                "key_points": k.key_points or [],
+                "category": k.category,
+                "tags": k.tags or [],
+                "similarity": 0.5
+            })
+    
+    # Step 2: RAG 生成回答
+    rag_result = await ai_service.rag_answer(request.query, context_items)
+    
+    return {
+        "query": request.query,
+        "answer": rag_result.get("answer"),
+        "sources": rag_result.get("sources", []),
+        "confidence": rag_result.get("confidence", 0),
+        "suggestions": rag_result.get("suggestions", []),
+        "missing_info": rag_result.get("missing_info"),
+        "retrieved_count": len(context_items),
+        "context_items": context_items[:5]  # 返回前5个供参考
+    }
+
+
 @router.get("/similar/{knowledge_id}")
 async def find_similar(
     knowledge_id: int,
