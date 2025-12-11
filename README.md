@@ -10,8 +10,7 @@
   <a href="#快速部署">快速部署</a> •
   <a href="#使用指南">使用指南</a> •
   <a href="#技术架构">技术架构</a> •
-  <a href="#api-文档">API 文档</a> •
-  <a href="docs/landing.html">🌐 Landing Page</a>
+  <a href="#api-文档">API 文档</a>
 </p>
 
 <p align="center">
@@ -20,6 +19,7 @@
   <img src="https://img.shields.io/badge/PostgreSQL-16-336791?style=flat-square&logo=postgresql" alt="PostgreSQL">
   <img src="https://img.shields.io/badge/Docker-Compose-2496ED?style=flat-square&logo=docker" alt="Docker">
   <img src="https://img.shields.io/badge/AI-Claude%203.5-blueviolet?style=flat-square" alt="AI">
+  <img src="https://img.shields.io/badge/Telegram-Bot-26A5E4?style=flat-square&logo=telegram" alt="Telegram">
 </p>
 
 ---
@@ -31,76 +31,129 @@
 ### 🎯 核心理念
 
 ```
-📄 原始内容 → 🤖 AI 分析 → 🧪 知识蒸馏 → 📚 结构化知识卡片
+📄 原始内容 → 🤖 5阶段AI分析 → 🧪 知识蒸馏 → ✓ 验证 → 📚 结构化知识卡片
 ```
 
 无论是一段代码、一篇文章、还是一张开源项目的截图，系统都能自动提取：
 - 📝 核心摘要
 - 💡 关键要点
 - 🏷️ 智能标签
-- 💻 使用示例
+- 💻 使用示例 & 安装命令
 - 🚀 部署指南
+- 🔗 GitHub 仓库地址（自动识别）
+- ✓ 知识验证状态
 
 ---
 
 ## ✨ 功能特性
 
-### 🔥 智能蒸馏
+### 🔥 多阶段 AI 蒸馏管道
+
+```
+📥 阶段1: 提取 → 🔬 阶段2: 分析 → 🔍 阶段3: 搜索 → ✓ 阶段4: 验证 → 📝 阶段5: 归纳
+```
+
+| 阶段 | 功能 | 说明 |
+|------|------|------|
+| 📥 **提取** | URL/项目识别 | 自动提取 GitHub 地址、版本号、代码片段 |
+| 🔬 **分析** | 深度理解 | 识别技术栈、架构模式、复杂度评估 |
+| 🔍 **搜索** | 信息补充 | 推断官方文档、生成安装命令 |
+| ✓ **验证** | 交叉验证 | 验证信息准确性，计算置信度 |
+| 📝 **归纳** | 知识卡片 | 生成全面的结构化知识卡片 |
+
+### 📷 智能截图分析
 
 | 功能 | 描述 |
 |------|------|
-| 📷 **截图分析** | 上传截图，AI 自动识别并提取内容 |
+| 📷 **截图分析** | 上传 GitHub 项目截图，自动提取仓库信息 |
 | 📝 **文本蒸馏** | 粘贴任意文本，自动生成结构化摘要 |
 | 🔗 **开源识别** | 自动识别开源项目，提取仓库地址和部署指南 |
 | 🏷️ **智能标签** | AI 自动生成相关标签，便于分类检索 |
+| ✓ **已验证标签** | 置信度 ≥70% 自动添加「已验证」标签 |
 
-### 🔍 语义搜索
+### 🔍 RAG 语义搜索
 
 ```
-用户提问 → 向量检索 → 相关知识 → AI 生成回答
+用户问题 → 向量检索 → 知识库匹配 → AI 生成回答 + 来源引用
 ```
 
 - 基于 **pgvector** 的向量相似度搜索
-- AI 根据知识库内容生成精准回答
+- **RAG 模式**：AI 根据知识库内容生成精准回答
+- 显示信息来源和置信度
+- 提供后续建议和相关知识
 
-### 📊 知识图谱
+### 📊 增强知识图谱
 
-可视化展示知识点之间的关联关系，包括：
-- 分类聚合视图
-- 标签云
-- 相关知识推荐
+- 📂 **分类分布** - 可视化各类别知识占比
+- 🔗 **知识关联** - 基于语义相似度的自动关联
+- 🏷️ **标签云** - 交互式标签云，支持点击筛选
+- 📈 **统计摘要** - 总知识/已验证/关联数量
+
+### 📱 Telegram 实时通知
+
+每个处理阶段实时推送进度：
+
+```
+🧪 #12 | 开始 AI 知识蒸馏...
+✅ #12 | 提取完成: Foundry - 以太坊开发工具...
+🔬 #12 | 阶段2/5: 深度分析...
+✅ #12 | 分析完成: 识别到 开源项目 类型
+🔍 #12 | 阶段3/5: 搜索补充信息...
+✅ #12 | 发现关联: https://github.com/foundry-rs/foundry
+🎉 #12 | 蒸馏完成!
+📝 Foundry 以太坊开发框架
+🏷️ web3, ethereum, solidity, 智能合约
+```
+
+### 🔄 实时自动刷新
+
+- 每 5 秒检查新数据
+- 新知识自动显示，无需手动刷新
+- 可开关的自动刷新功能
+- 实时监听状态指示
 
 ### 📧 邮件报告
 
-自动发送每日/每周知识摘要邮件，包含：
-- 新增知识统计
-- 今日亮点
-- 知识关联分析
-
----
-
-## 🖼️ 界面预览
-
-### 移动端界面 (iPhone 16 Pro Max 适配)
-
-<p align="center">
-  <img src="docs/images/screenshot-login.svg" alt="登录页面" width="200">
-  <img src="docs/images/screenshot-dashboard.svg" alt="仪表盘" width="200">
-  <img src="docs/images/screenshot-add.svg" alt="添加知识" width="200">
-  <img src="docs/images/screenshot-search.svg" alt="智能搜索" width="200">
-</p>
-
-| 登录页面 | 仪表盘 | 添加知识 | 智能搜索 |
-|:---:|:---:|:---:|:---:|
-| 简洁的赛博朋克风格登录界面 | 知识库统计与系统状态概览 | 截图上传与 AI 自动分析 | AI 问答与语义搜索结果 |
+自动发送每日/每周知识摘要邮件
 
 ---
 
 ## 🏗️ 技术架构
 
-<p align="center">
-  <img src="docs/images/architecture.svg" alt="系统架构图" width="800">
-</p>
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        Frontend                              │
+│              React 18 + TypeScript + Vite                    │
+│         Mobile-First UI (iPhone 16 Pro Max 适配)              │
+└────────────────────────────┬────────────────────────────────┘
+                             │
+                             ▼
+┌─────────────────────────────────────────────────────────────┐
+│                     Backend API                              │
+│                FastAPI + Python 3.11                         │
+├─────────────────────────────────────────────────────────────┤
+│  📥 Knowledge Router    │  🔍 Search Router (RAG)           │
+│  📊 Graph Router        │  ✓ Verify Router                  │
+│  📤 Upload Router       │  📱 Telegram Router               │
+└────────────────────────────┬────────────────────────────────┘
+                             │
+                             ▼
+┌─────────────────────────────────────────────────────────────┐
+│                    AI Services                               │
+│              Distillation Pipeline (5阶段)                    │
+├─────────────────────────────────────────────────────────────┤
+│  🤖 Claude 3.5 Sonnet (OpenRouter)                          │
+│  📊 Embedding Service (向量生成)                             │
+│  📱 Telegram Service (通知)                                  │
+└────────────────────────────┬────────────────────────────────┘
+                             │
+                             ▼
+┌─────────────────────────────────────────────────────────────┐
+│                      Database                                │
+│             PostgreSQL 16 + pgvector                         │
+│            (向量相似度搜索 & 知识存储)                          │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ### 技术栈详情
 
@@ -111,6 +164,7 @@
 | **后端** | FastAPI (Python 3.11) | 异步 API 框架 |
 | **数据库** | PostgreSQL 16 + pgvector | 向量相似度搜索 |
 | **AI** | Claude 3.5 Sonnet (OpenRouter) | 知识蒸馏 & 图片分析 |
+| **通知** | Telegram Bot API | 实时处理状态推送 |
 | **容器** | Docker Compose | 一键部署 |
 
 ---
@@ -163,6 +217,12 @@ OPENROUTER_API_KEY=sk-or-v1-your-api-key
 OPENROUTER_MODEL=anthropic/claude-3.5-sonnet
 
 # ================================
+# Telegram Bot 配置 (推荐)
+# ================================
+TELEGRAM_BOT_TOKEN=your_bot_token
+TELEGRAM_CHAT_ID=your_chat_id
+
+# ================================
 # 邮件配置 (可选)
 # ================================
 SMTP_HOST=smtp.example.com
@@ -171,6 +231,14 @@ SMTP_USER=your@email.com
 SMTP_PASSWORD=your_password
 EMAIL_RECIPIENTS=recipient@example.com
 ```
+
+### 配置 Telegram 通知
+
+1. 在 Telegram 中搜索 `@BotFather`，创建新 Bot
+2. 获取 Bot Token，填入 `TELEGRAM_BOT_TOKEN`
+3. 向你的 Bot 发送任意消息
+4. 访问 `http://YOUR_IP:8000/api/v1/telegram/get-updates` 获取 Chat ID
+5. 填入 `TELEGRAM_CHAT_ID`
 
 ### 访问服务
 
@@ -189,20 +257,21 @@ EMAIL_RECIPIENTS=recipient@example.com
 
 ## 📱 使用指南
 
-### 1️⃣ 添加知识 - 截图方式
+### 1️⃣ 添加知识 - 截图方式（推荐）
 
 最简单的方式是直接上传截图：
 
 1. 点击底部 ➕ 按钮
-2. 选择 📷 上传截图
+2. 选择 📷 上传截图（支持 GitHub 项目页面、代码截图等）
 3. 点击 🔍 分析图片
-4. AI 自动识别内容并生成知识卡片
+4. AI 自动运行 5 阶段蒸馏，Telegram 实时推送进度
+5. 自动刷新显示生成的知识卡片
 
 支持的截图类型：
-- 开源项目主页 / README
-- 代码片段
-- 技术文档
-- 架构图
+- ✅ 开源项目主页 / README（自动提取 GitHub 地址）
+- ✅ 代码片段
+- ✅ 技术文档
+- ✅ 架构图
 
 ### 2️⃣ 添加知识 - 文本方式
 
@@ -211,42 +280,41 @@ EMAIL_RECIPIENTS=recipient@example.com
 3. 点击 🧪 蒸馏知识
 4. 查看生成的知识卡片
 
-### 3️⃣ 智能搜索
+### 3️⃣ RAG 智能搜索
 
 1. 点击底部 🔍 按钮
-2. 输入问题（如："React Hooks 怎么用？"）
+2. 输入问题（如："如何开发 Web3 DApp？"）
 3. AI 会根据知识库内容生成回答
-4. 同时展示相关知识卡片
+4. 显示引用来源和置信度
+5. 提供后续建议
 
-### 4️⃣ 知识图谱
+### 4️⃣ 知识验证
+
+1. 在知识卡片上点击 🔍 验证按钮
+2. 系统搜索知识库中的相关证据
+3. AI 分析证据是否支持该知识
+4. 置信度 ≥70% 自动添加「已验证」标签
+
+### 5️⃣ 知识图谱
 
 1. 点击底部 📊 按钮
-2. 查看按分类聚合的知识点
+2. 查看分类分布和知识关联
 3. 点击标签云中的标签快速筛选
-4. 探索知识之间的关联
+4. 探索知识之间的语义关联
 
 ---
 
 ## 📡 API 文档
 
-完整 API 文档请访问 `/docs`，这里是常用接口：
-
 ### 创建知识
 
 ```bash
-# 文本方式
-curl -X POST http://localhost:8000/api/v1/knowledge/ \
-  -H "Content-Type: application/json" \
-  -d '{
-    "content": "你的知识内容...",
-    "auto_process": true
-  }'
-
-# 图片方式 (先上传图片)
+# 图片方式 (推荐)
+# 1. 先上传图片
 curl -X POST http://localhost:8000/api/v1/upload/image \
   -F "file=@screenshot.png"
 
-# 然后用图片路径创建知识
+# 2. 用图片路径创建知识（5阶段AI蒸馏）
 curl -X POST http://localhost:8000/api/v1/knowledge/ \
   -H "Content-Type: application/json" \
   -d '{
@@ -257,16 +325,27 @@ curl -X POST http://localhost:8000/api/v1/knowledge/ \
   }'
 ```
 
-### 搜索知识
+### RAG 搜索
 
 ```bash
-curl -X POST http://localhost:8000/api/v1/search/ \
+curl -X POST http://localhost:8000/api/v1/search/rag \
   -H "Content-Type: application/json" \
   -d '{
-    "query": "如何优化 React 性能？",
-    "limit": 10,
-    "include_answer": true
+    "query": "如何开发 Web3 DApp？",
+    "limit": 10
   }'
+```
+
+### 验证知识
+
+```bash
+curl -X POST http://localhost:8000/api/v1/verify/knowledge/1
+```
+
+### 获取图谱数据
+
+```bash
+curl http://localhost:8000/api/v1/graph/data
 ```
 
 ### 获取统计
@@ -286,10 +365,18 @@ knowledge-card/
 ├── 📁 backend/                 # FastAPI 后端
 │   ├── 📁 models/              # 数据库模型
 │   ├── 📁 routers/             # API 路由
+│   │   ├── knowledge.py        # 知识 CRUD
+│   │   ├── search.py           # 搜索 & RAG
+│   │   ├── graph.py            # 知识图谱
+│   │   ├── verify.py           # 知识验证
+│   │   ├── telegram.py         # Telegram 通知
+│   │   └── upload.py           # 文件上传
 │   ├── 📁 services/            # 业务逻辑
-│   │   ├── ai_service.py       # AI 蒸馏 & 图片分析
+│   │   ├── ai_service.py       # AI 调用
+│   │   ├── distillation_pipeline.py  # 5阶段蒸馏管道
 │   │   ├── knowledge_service.py
-│   │   └── embedding_service.py
+│   │   ├── embedding_service.py
+│   │   └── telegram_service.py # Telegram 通知
 │   ├── main.py                 # 应用入口
 │   ├── config.py               # 配置管理
 │   ├── database.py             # 数据库连接
@@ -298,15 +385,13 @@ knowledge-card/
 │
 ├── 📁 frontend/                # React 前端
 │   ├── 📁 src/
-│   │   ├── App.tsx             # 主应用
+│   │   ├── App.tsx             # 主应用 (自动刷新)
 │   │   └── App.css             # 样式 (移动优先)
 │   ├── index.html
 │   ├── Dockerfile
 │   └── package.json
 │
 ├── 📁 docs/                    # 文档资源
-│   └── 📁 images/              # 项目图片
-│
 ├── 📁 uploads/                 # 上传文件存储
 │
 ├── docker-compose.yml          # Docker 编排
@@ -344,14 +429,16 @@ docker-compose up -d backend
 ## ❓ 常见问题
 
 ### Q: AI 服务报错？
-
 确保 `.env` 中正确配置了 `OPENROUTER_API_KEY`
 
 ### Q: 图片分析失败？
-
 1. 检查图片是否清晰可读
 2. 确保使用的是 Claude 3.5 Sonnet 模型（支持 Vision）
 3. 查看后端日志: `docker-compose logs backend`
+
+### Q: Telegram 通知不工作？
+1. 确保已配置 `TELEGRAM_BOT_TOKEN` 和 `TELEGRAM_CHAT_ID`
+2. 访问 `/api/v1/telegram/status` 检查状态
 
 ### Q: 数据如何备份？
 
