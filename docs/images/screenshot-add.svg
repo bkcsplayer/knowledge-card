@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 430 932">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a0e14"/>
+      <stop offset="100%" style="stop-color:#111820"/>
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00d4ff"/>
+      <stop offset="100%" style="stop-color:#7c4dff"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Phone Frame -->
+  <rect width="430" height="932" rx="50" fill="url(#bgGrad)"/>
+  
+  <!-- Status Bar -->
+  <rect x="150" y="15" width="130" height="30" rx="15" fill="#1a2130"/>
+  
+  <!-- Header -->
+  <rect x="0" y="50" width="430" height="70" fill="#111820"/>
+  <text x="30" y="95" font-family="Arial, sans-serif" font-size="28">🐕</text>
+  <text x="70" y="93" fill="url(#accentGrad)" font-family="Arial, sans-serif" font-size="18" font-weight="bold">FFT 狗腿子</text>
+  
+  <!-- Title -->
+  <text x="20" y="160" fill="#e6edf5" font-family="Arial, sans-serif" font-size="22" font-weight="bold">➕ 添加新知识</text>
+  <text x="20" y="185" fill="#8b99ab" font-family="Arial, sans-serif" font-size="13">📝 输入文字 或 📷 上传截图，AI 将自动分析</text>
+  
+  <!-- Image Upload Section -->
+  <rect x="20" y="210" width="390" height="160" rx="16" fill="rgba(0,212,255,0.05)" stroke="url(#accentGrad)" stroke-width="2" stroke-dasharray="8,4"/>
+  <text x="40" y="245" fill="#e6edf5" font-family="Arial, sans-serif" font-size="15" font-weight="600">📷 上传截图</text>
+  <text x="40" y="268" fill="#5a6878" font-family="Arial, sans-serif" font-size="12">支持开源项目页面、代码截图、文档等</text>
+  
+  <rect x="40" y="290" width="120" height="44" rx="12" fill="url(#accentGrad)"/>
+  <text x="100" y="318" fill="#ffffff" font-family="Arial, sans-serif" font-size="14" text-anchor="middle">选择图片</text>
+  
+  <!-- Uploaded Images Preview -->
+  <rect x="180" y="290" width="50" height="50" rx="8" fill="#242d3d"/>
+  <text x="205" y="322" fill="#5a6878" font-family="Arial, sans-serif" font-size="24" text-anchor="middle">🖼️</text>
+  <rect x="240" y="290" width="50" height="50" rx="8" fill="#242d3d"/>
+  <text x="265" y="322" fill="#5a6878" font-family="Arial, sans-serif" font-size="24" text-anchor="middle">🖼️</text>
+  
+  <rect x="40" y="350" width="350" height="24" rx="6" fill="rgba(0,230,118,0.1)"/>
+  <text x="55" y="367" fill="#00e676" font-family="Arial, sans-serif" font-size="11">已上传 2 张图片，AI 将分析图片内容</text>
+  
+  <!-- Or Divider -->
+  <line x1="40" y1="400" x2="175" y2="400" stroke="#2a3545" stroke-width="1"/>
+  <text x="215" y="405" fill="#5a6878" font-family="Arial, sans-serif" font-size="13" text-anchor="middle">或</text>
+  <line x1="255" y1="400" x2="390" y2="400" stroke="#2a3545" stroke-width="1"/>
+  
+  <!-- Text Input -->
+  <rect x="20" y="425" width="390" height="180" rx="16" fill="#1a2130" stroke="#2a3545" stroke-width="1"/>
+  <text x="40" y="460" fill="#5a6878" font-family="Arial, sans-serif" font-size="14">在此输入或粘贴文字内容...</text>
+  <text x="40" y="490" fill="#5a6878" font-family="Arial, sans-serif" font-size="14"></text>
+  <text x="40" y="520" fill="#5a6878" font-family="Arial, sans-serif" font-size="14">如果已上传截图，此处可留空</text>
+  
+  <!-- Processing Preview -->
+  <rect x="20" y="625" width="390" height="150" rx="16" fill="#1a2130" stroke="#00d4ff" stroke-width="1"/>
+  <text x="40" y="660" fill="#00d4ff" font-family="Arial, sans-serif" font-size="14" font-weight="600">🔄 AI 正在处理...</text>
+  
+  <rect x="40" y="680" width="350" height="28" rx="6" fill="rgba(0,230,118,0.1)"/>
+  <text x="55" y="699" fill="#00e676" font-family="Arial, sans-serif" font-size="12">✓ 创建知识条目</text>
+  
+  <rect x="40" y="712" width="350" height="28" rx="6" fill="rgba(0,230,118,0.1)"/>
+  <text x="55" y="731" fill="#00e676" font-family="Arial, sans-serif" font-size="12">✓ 验证内容</text>
+  
+  <rect x="40" y="744" width="350" height="28" rx="6" fill="rgba(0,212,255,0.1)"/>
+  <text x="55" y="763" fill="#00d4ff" font-family="Arial, sans-serif" font-size="12">⏳ 分析图片内容...</text>
+  
+  <!-- Buttons -->
+  <rect x="20" y="795" width="250" height="50" rx="14" fill="url(#accentGrad)"/>
+  <text x="145" y="827" fill="#ffffff" font-family="Arial, sans-serif" font-size="15" font-weight="600" text-anchor="middle">🔍 分析图片</text>
+  
+  <rect x="280" y="795" width="130" height="50" rx="14" fill="#242d3d"/>
+  <text x="345" y="827" fill="#e6edf5" font-family="Arial, sans-serif" font-size="15" text-anchor="middle">取消</text>
+  
+  <!-- Bottom Navigation -->
+  <rect x="0" y="860" width="430" height="72" fill="#111820"/>
+  <g text-anchor="middle" font-family="Arial, sans-serif">
+    <text x="55" y="895" fill="#5a6878" font-size="22">📊</text>
+    <text x="55" y="915" fill="#5a6878" font-size="10">首页</text>
+    
+    <text x="140" y="895" fill="#5a6878" font-size="22">📚</text>
+    <text x="140" y="915" fill="#5a6878" font-size="10">知识库</text>
+    
+    <circle cx="215" cy="875" r="28" fill="url(#accentGrad)"/>
+    <text x="215" y="882" fill="#ffffff" font-size="20">➕</text>
+    <text x="215" y="915" fill="#00d4ff" font-size="10">添加</text>
+    
+    <text x="290" y="895" fill="#5a6878" font-size="22">🔍</text>
+    <text x="290" y="915" fill="#5a6878" font-size="10">搜索</text>
+    
+    <text x="375" y="895" fill="#5a6878" font-size="22">📊</text>
+    <text x="375" y="915" fill="#5a6878" font-size="10">图谱</text>
+  </g>
+</svg>
+

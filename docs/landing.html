@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FFT 狗腿子 - AI 驱动的知识蒸馏系统</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐕</text></svg>">
+    <style>
+        :root {
+            --bg-primary: #0a0e14;
+            --bg-secondary: #111820;
+            --bg-card: #1a2130;
+            --text-primary: #e6edf5;
+            --text-secondary: #8b99ab;
+            --text-muted: #5a6878;
+            --accent-primary: #00d4ff;
+            --accent-secondary: #7c4dff;
+            --accent-success: #00e676;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 40px 20px;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(0,212,255,0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(124,77,255,0.1) 0%, transparent 50%),
+                var(--bg-primary);
+        }
+        
+        .logo {
+            font-size: 100px;
+            margin-bottom: 20px;
+            animation: bounce 2s ease infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+        
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #00d4ff, #7c4dff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+        
+        .tagline {
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+        }
+        
+        .badges {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 40px;
+        }
+        
+        .badge {
+            padding: 8px 16px;
+            background: var(--bg-card);
+            border-radius: 20px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            border: 1px solid #2a3545;
+        }
+        
+        .cta-buttons {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .btn {
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #00d4ff, #7c4dff);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(0,212,255,0.3);
+        }
+        
+        .btn-secondary {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid #2a3545;
+        }
+        
+        .btn-secondary:hover {
+            border-color: var(--accent-primary);
+        }
+        
+        /* Screenshots Section */
+        .screenshots {
+            padding: 80px 20px;
+            background: var(--bg-secondary);
+        }
+        
+        .section-title {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 60px;
+        }
+        
+        .screenshots-grid {
+            display: flex;
+            gap: 40px;
+            justify-content: center;
+            flex-wrap: wrap;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .screenshot-item {
+            text-align: center;
+        }
+        
+        .screenshot-item img {
+            width: 280px;
+            height: auto;
+            border-radius: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            transition: transform 0.3s;
+        }
+        
+        .screenshot-item img:hover {
+            transform: scale(1.05);
+        }
+        
+        .screenshot-item h3 {
+            margin-top: 20px;
+            color: var(--text-primary);
+        }
+        
+        .screenshot-item p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        
+        /* Features Section */
+        .features {
+            padding: 80px 20px;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid #2a3545;
+            border-radius: 20px;
+            padding: 30px;
+            transition: all 0.3s;
+        }
+        
+        .feature-card:hover {
+            border-color: var(--accent-primary);
+            transform: translateY(-5px);
+        }
+        
+        .feature-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+        
+        .feature-card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+        }
+        
+        .feature-card p {
+            color: var(--text-secondary);
+        }
+        
+        /* Architecture Section */
+        .architecture {
+            padding: 80px 20px;
+            background: var(--bg-secondary);
+        }
+        
+        .architecture img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+        }
+        
+        /* Quick Start Section */
+        .quickstart {
+            padding: 80px 20px;
+        }
+        
+        .quickstart-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .code-block {
+            background: var(--bg-card);
+            border: 1px solid #2a3545;
+            border-radius: 12px;
+            padding: 24px;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+        
+        .code-block pre {
+            color: var(--accent-primary);
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 0.9rem;
+            line-height: 1.8;
+        }
+        
+        .code-block .comment {
+            color: var(--text-muted);
+        }
+        
+        /* Footer */
+        footer {
+            padding: 40px 20px;
+            text-align: center;
+            color: var(--text-muted);
+            border-top: 1px solid #2a3545;
+        }
+        
+        footer a {
+            color: var(--accent-primary);
+            text-decoration: none;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            .tagline {
+                font-size: 1.2rem;
+            }
+            
+            .screenshot-item img {
+                width: 220px;
+            }
+            
+            .section-title {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="logo">🐕</div>
+        <h1>FFT 狗腿子</h1>
+        <p class="tagline">AI 驱动的知识蒸馏系统</p>
+        
+        <div class="badges">
+            <span class="badge">📷 截图分析</span>
+            <span class="badge">🧪 智能蒸馏</span>
+            <span class="badge">🔍 语义搜索</span>
+            <span class="badge">📊 知识图谱</span>
+            <span class="badge">📱 移动优先</span>
+        </div>
+        
+        <div class="cta-buttons">
+            <a href="https://github.com/bkcsplayer/knowledge-card" class="btn btn-primary">
+                ⭐ GitHub
+            </a>
+            <a href="#quickstart" class="btn btn-secondary">
+                🚀 快速开始
+            </a>
+        </div>
+    </section>
+    
+    <!-- Screenshots Section -->
+    <section class="screenshots">
+        <h2 class="section-title">📱 界面预览</h2>
+        <div class="screenshots-grid">
+            <div class="screenshot-item">
+                <img src="images/screenshot-login.svg" alt="登录页面">
+                <h3>登录页面</h3>
+                <p>简洁的登录界面</p>
+            </div>
+            <div class="screenshot-item">
+                <img src="images/screenshot-dashboard.svg" alt="仪表盘">
+                <h3>仪表盘</h3>
+                <p>知识库概览与统计</p>
+            </div>
+            <div class="screenshot-item">
+                <img src="images/screenshot-add.svg" alt="添加知识">
+                <h3>添加知识</h3>
+                <p>上传截图自动分析</p>
+            </div>
+            <div class="screenshot-item">
+                <img src="images/screenshot-search.svg" alt="智能搜索">
+                <h3>智能搜索</h3>
+                <p>AI 问答与相关知识</p>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Features Section -->
+    <section class="features">
+        <h2 class="section-title">✨ 核心功能</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">📷</div>
+                <h3>截图分析</h3>
+                <p>上传任何截图，AI 自动识别文字、代码、界面元素，提取关键信息。</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🧪</div>
+                <h3>知识蒸馏</h3>
+                <p>复杂内容自动提炼成结构化知识卡片：摘要、关键点、标签、使用示例。</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔍</div>
+                <h3>语义搜索</h3>
+                <p>基于 pgvector 向量数据库，理解语义而非关键词匹配。</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🤖</div>
+                <h3>AI 问答</h3>
+                <p>输入问题，AI 根据知识库内容生成精准回答。</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3>知识图谱</h3>
+                <p>可视化知识点关联，发现隐藏的联系和模式。</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📧</div>
+                <h3>邮件报告</h3>
+                <p>自动发送每日/每周知识摘要，持续追踪学习进度。</p>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Architecture Section -->
+    <section class="architecture">
+        <h2 class="section-title">🏗️ 系统架构</h2>
+        <img src="images/architecture.svg" alt="系统架构图">
+    </section>
+    
+    <!-- Quick Start Section -->
+    <section class="quickstart" id="quickstart">
+        <h2 class="section-title">🚀 快速开始</h2>
+        <div class="quickstart-content">
+            <div class="code-block">
+                <pre><span class="comment"># 1. 克隆仓库</span>
+git clone https://github.com/bkcsplayer/knowledge-card.git
+cd knowledge-card
+
+<span class="comment"># 2. 配置环境变量</span>
+cp .env.example .env
+nano .env  <span class="comment"># 填入 OpenRouter API Key</span>
+
+<span class="comment"># 3. 启动服务</span>
+docker-compose up -d --build
+
+<span class="comment"># 4. 访问应用</span>
+<span class="comment"># 前端: http://localhost:5173</span>
+<span class="comment"># API:  http://localhost:8000/docs</span></pre>
+            </div>
+            
+            <p style="text-align: center; color: var(--text-secondary); margin-top: 30px;">
+                默认登录: <strong>admin</strong> / <strong>1q2w3e4R.</strong>
+            </p>
+        </div>
+    </section>
+    
+    <!-- Footer -->
+    <footer>
+        <p>Made with ❤️ by FFT Team</p>
+        <p style="margin-top: 10px;">
+            <a href="https://github.com/bkcsplayer/knowledge-card">GitHub</a> · 
+            <a href="https://github.com/bkcsplayer/knowledge-card/blob/main/API_DOCUMENTATION.md">API 文档</a>
+        </p>
+    </footer>
+</body>
+</html>
+

@@ -1,0 +1,64 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 430 932">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a0e14"/>
+      <stop offset="100%" style="stop-color:#111820"/>
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00d4ff"/>
+      <stop offset="100%" style="stop-color:#7c4dff"/>
+    </linearGradient>
+    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a2130"/>
+      <stop offset="100%" style="stop-color:#242d3d"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Phone Frame -->
+  <rect width="430" height="932" rx="50" fill="url(#bgGrad)"/>
+  
+  <!-- Status Bar -->
+  <rect x="150" y="15" width="130" height="30" rx="15" fill="#1a2130"/>
+  
+  <!-- Decorative circles -->
+  <circle cx="80" cy="750" r="200" fill="rgba(0,212,255,0.05)"/>
+  <circle cx="380" cy="200" r="150" fill="rgba(124,77,255,0.05)"/>
+  
+  <!-- Login Card -->
+  <rect x="40" y="250" width="350" height="480" rx="28" fill="url(#cardGrad)" stroke="#2a3545" stroke-width="1"/>
+  
+  <!-- Logo -->
+  <text x="215" y="330" font-family="Arial, sans-serif" font-size="72" text-anchor="middle">🐕</text>
+  
+  <!-- Title -->
+  <text x="215" y="400" fill="url(#accentGrad)" font-family="Arial, sans-serif" font-size="32" font-weight="bold" text-anchor="middle">FFT 狗腿子</text>
+  <text x="215" y="430" fill="#5a6878" font-family="Arial, sans-serif" font-size="14" text-anchor="middle">Knowledge Distillery</text>
+  
+  <!-- Username Field -->
+  <rect x="65" y="470" width="300" height="56" rx="14" fill="#151c27" stroke="#2a3545" stroke-width="1"/>
+  <text x="85" y="455" fill="#8b99ab" font-family="Arial, sans-serif" font-size="13">用户名</text>
+  <text x="85" y="505" fill="#e6edf5" font-family="Arial, sans-serif" font-size="16">admin</text>
+  
+  <!-- Password Field -->
+  <rect x="65" y="555" width="300" height="56" rx="14" fill="#151c27" stroke="#2a3545" stroke-width="1"/>
+  <text x="85" y="540" fill="#8b99ab" font-family="Arial, sans-serif" font-size="13">密码</text>
+  <text x="85" y="590" fill="#e6edf5" font-family="Arial, sans-serif" font-size="16">••••••••</text>
+  
+  <!-- Login Button -->
+  <rect x="65" y="640" width="300" height="56" rx="14" fill="url(#accentGrad)" filter="url(#glow)"/>
+  <text x="215" y="676" fill="#ffffff" font-family="Arial, sans-serif" font-size="18" font-weight="600" text-anchor="middle">登 录</text>
+  
+  <!-- Footer -->
+  <text x="215" y="710" fill="#5a6878" font-family="Arial, sans-serif" font-size="12" text-anchor="middle">AI 驱动的知识蒸馏系统</text>
+  
+  <!-- Home Indicator -->
+  <rect x="140" y="900" width="150" height="5" rx="2.5" fill="#5a6878"/>
+</svg>
+

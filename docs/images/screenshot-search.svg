@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 430 932">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0a0e14"/>
+      <stop offset="100%" style="stop-color:#111820"/>
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00d4ff"/>
+      <stop offset="100%" style="stop-color:#7c4dff"/>
+    </linearGradient>
+    <linearGradient id="answerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:rgba(0,212,255,0.1)"/>
+      <stop offset="100%" style="stop-color:rgba(124,77,255,0.1)"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Phone Frame -->
+  <rect width="430" height="932" rx="50" fill="url(#bgGrad)"/>
+  
+  <!-- Status Bar -->
+  <rect x="150" y="15" width="130" height="30" rx="15" fill="#1a2130"/>
+  
+  <!-- Header -->
+  <rect x="0" y="50" width="430" height="70" fill="#111820"/>
+  <text x="30" y="95" font-family="Arial, sans-serif" font-size="28">🐕</text>
+  <text x="70" y="93" fill="url(#accentGrad)" font-family="Arial, sans-serif" font-size="18" font-weight="bold">FFT 狗腿子</text>
+  
+  <!-- Title -->
+  <text x="20" y="160" fill="#e6edf5" font-family="Arial, sans-serif" font-size="22" font-weight="bold">🔍 智能搜索</text>
+  <text x="20" y="185" fill="#8b99ab" font-family="Arial, sans-serif" font-size="13">输入问题，AI 将从知识库中找到答案</text>
+  
+  <!-- Search Input -->
+  <rect x="20" y="205" width="310" height="50" rx="14" fill="#1a2130" stroke="#2a3545" stroke-width="1"/>
+  <text x="40" y="237" fill="#e6edf5" font-family="Arial, sans-serif" font-size="15">React 性能优化有哪些方法？</text>
+  
+  <rect x="340" y="205" width="70" height="50" rx="14" fill="url(#accentGrad)"/>
+  <text x="375" y="237" fill="#ffffff" font-family="Arial, sans-serif" font-size="14" text-anchor="middle">搜索</text>
+  
+  <!-- AI Answer Card -->
+  <rect x="20" y="275" width="390" height="180" rx="16" fill="url(#answerGrad)" stroke="#00d4ff" stroke-width="1"/>
+  <text x="40" y="310" fill="#00d4ff" font-family="Arial, sans-serif" font-size="15" font-weight="600">🤖 AI 回答</text>
+  
+  <text x="40" y="340" fill="#e6edf5" font-family="Arial, sans-serif" font-size="13">根据知识库内容，React 性能优化主要包括：</text>
+  <text x="40" y="365" fill="#8b99ab" font-family="Arial, sans-serif" font-size="13">1. 使用 React.memo 避免不必要的重渲染</text>
+  <text x="40" y="390" fill="#8b99ab" font-family="Arial, sans-serif" font-size="13">2. 使用 useMemo 和 useCallback 缓存</text>
+  <text x="40" y="415" fill="#8b99ab" font-family="Arial, sans-serif" font-size="13">3. 虚拟列表处理大量数据</text>
+  <text x="40" y="440" fill="#8b99ab" font-family="Arial, sans-serif" font-size="13">4. 代码分割和懒加载...</text>
+  
+  <!-- Search Results -->
+  <text x="20" y="485" fill="#8b99ab" font-family="Arial, sans-serif" font-size="14">📚 相关知识 (3)</text>
+  
+  <!-- Result Card 1 -->
+  <rect x="20" y="500" width="390" height="100" rx="14" fill="#1a2130" stroke="#2a3545" stroke-width="1"/>
+  <text x="40" y="530" fill="#e6edf5" font-family="Arial, sans-serif" font-size="15" font-weight="600">React Hooks 进阶指南</text>
+  <rect x="340" y="515" width="50" height="22" rx="11" fill="rgba(0,230,118,0.15)"/>
+  <text x="365" y="530" fill="#00e676" font-family="Arial, sans-serif" font-size="10" text-anchor="middle">92%</text>
+  <text x="40" y="555" fill="#8b99ab" font-family="Arial, sans-serif" font-size="12">深入理解 useState 和 useEffect 的工作原理...</text>
+  <rect x="40" y="570" width="40" height="18" rx="4" fill="#00d4ff"/>
+  <text x="60" y="583" fill="#ffffff" font-family="Arial, sans-serif" font-size="9" text-anchor="middle">技术</text>
+  <rect x="90" y="570" width="45" height="18" rx="4" fill="#242d3d"/>
+  <text x="112" y="583" fill="#8b99ab" font-family="Arial, sans-serif" font-size="9" text-anchor="middle">React</text>
+  
+  <!-- Result Card 2 -->
+  <rect x="20" y="610" width="390" height="100" rx="14" fill="#1a2130" stroke="#2a3545" stroke-width="1"/>
+  <text x="40" y="640" fill="#e6edf5" font-family="Arial, sans-serif" font-size="15" font-weight="600">前端性能优化实践</text>
+  <rect x="340" y="625" width="50" height="22" rx="11" fill="rgba(0,230,118,0.15)"/>
+  <text x="365" y="640" fill="#00e676" font-family="Arial, sans-serif" font-size="10" text-anchor="middle">87%</text>
+  <text x="40" y="665" fill="#8b99ab" font-family="Arial, sans-serif" font-size="12">Web 应用性能优化的最佳实践和工具...</text>
+  <rect x="40" y="680" width="40" height="18" rx="4" fill="#00d4ff"/>
+  <text x="60" y="693" fill="#ffffff" font-family="Arial, sans-serif" font-size="9" text-anchor="middle">技术</text>
+  <rect x="90" y="680" width="45" height="18" rx="4" fill="#242d3d"/>
+  <text x="112" y="693" fill="#8b99ab" font-family="Arial, sans-serif" font-size="9" text-anchor="middle">性能</text>
+  
+  <!-- Result Card 3 -->
+  <rect x="20" y="720" width="390" height="100" rx="14" fill="#1a2130" stroke="#2a3545" stroke-width="1"/>
+  <text x="40" y="750" fill="#e6edf5" font-family="Arial, sans-serif" font-size="15" font-weight="600">Virtual DOM 工作原理</text>
+  <rect x="340" y="735" width="50" height="22" rx="11" fill="rgba(255,171,0,0.15)"/>
+  <text x="365" y="750" fill="#ffab00" font-family="Arial, sans-serif" font-size="10" text-anchor="middle">76%</text>
+  <text x="40" y="775" fill="#8b99ab" font-family="Arial, sans-serif" font-size="12">理解 React 虚拟 DOM 的 Diff 算法...</text>
+  <rect x="40" y="790" width="40" height="18" rx="4" fill="#00d4ff"/>
+  <text x="60" y="803" fill="#ffffff" font-family="Arial, sans-serif" font-size="9" text-anchor="middle">技术</text>
+  
+  <!-- Bottom Navigation -->
+  <rect x="0" y="860" width="430" height="72" fill="#111820"/>
+  <g text-anchor="middle" font-family="Arial, sans-serif">
+    <text x="55" y="895" fill="#5a6878" font-size="22">📊</text>
+    <text x="55" y="915" fill="#5a6878" font-size="10">首页</text>
+    
+    <text x="140" y="895" fill="#5a6878" font-size="22">📚</text>
+    <text x="140" y="915" fill="#5a6878" font-size="10">知识库</text>
+    
+    <circle cx="215" cy="875" r="28" fill="url(#accentGrad)"/>
+    <text x="215" y="882" fill="#ffffff" font-size="20">➕</text>
+    <text x="215" y="915" fill="#8b99ab" font-size="10">添加</text>
+    
+    <text x="290" y="895" fill="#00d4ff" font-size="22">🔍</text>
+    <text x="290" y="915" fill="#00d4ff" font-size="10">搜索</text>
+    
+    <text x="375" y="895" fill="#5a6878" font-size="22">📊</text>
+    <text x="375" y="915" fill="#5a6878" font-size="10">图谱</text>
+  </g>
+</svg>
+
