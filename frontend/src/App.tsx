@@ -4,11 +4,11 @@ import './App.css'
 // 动态获取后端 API 地址
 const API_BASE = `http://${window.location.hostname}:8000`
 
-// 认证配置
-const AUTH_CONFIG = {
-  username: 'admin',
-  password: '1q2w3e4R.'
-}
+// 认证配置 - 支持多用户
+const AUTH_USERS = [
+  { username: 'admin', password: '1q2w3e4R.', role: 'admin' },
+  { username: 'ffthelper', password: '1q2w3e4R.', role: 'helper' }
+]
 
 interface ProcessingStep {
   step: string
@@ -179,9 +179,11 @@ const LoginPage = ({ onLogin }: { onLogin: () => void }) => {
 
     // 模拟登录延迟
     setTimeout(() => {
-      if (username === AUTH_CONFIG.username && password === AUTH_CONFIG.password) {
+      const user = AUTH_USERS.find(u => u.username === username && u.password === password)
+      if (user) {
         localStorage.setItem('fft_auth', 'true')
         localStorage.setItem('fft_user', username)
+        localStorage.setItem('fft_role', user.role)
         onLogin()
       } else {
         setError('用户名或密码错误')
