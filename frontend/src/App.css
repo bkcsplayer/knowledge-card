@@ -2086,17 +2086,166 @@ body {
 }
 
 @media (max-width: 430px) {
+  /* 统计摘要 - 2x2 网格 */
   .stats-summary {
     grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
   }
   
+  .stat-item {
+    padding: 0.6rem;
+  }
+  
+  .stat-item .stat-value {
+    font-size: 1.2rem;
+  }
+  
+  .stat-item .stat-label {
+    font-size: 0.7rem;
+  }
+  
+  /* 关联项 - 垂直显示 */
   .connection-item {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.3rem;
+    padding: 0.8rem;
   }
   
   .connection-arrow {
+    align-self: center;
+    transform: rotate(90deg);
+  }
+  
+  /* 仪表盘统计网格 - 2x2 */
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  
+  .stat-card {
+    padding: 12px 8px;
+  }
+  
+  .stat-number {
+    font-size: 28px;
+  }
+  
+  .stat-label {
+    font-size: 0.75rem;
+  }
+  
+  /* 图谱区块 */
+  .graph-section {
+    padding: 0.8rem;
+    margin-bottom: 0.8rem;
+  }
+  
+  .graph-section h3 {
+    font-size: 1rem;
+    margin-bottom: 0.6rem;
+  }
+  
+  /* 分类分布 - 垂直堆叠 */
+  .category-distribution {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+  }
+  
+  .category-bar-item {
+    padding: 0.6rem;
+  }
+  
+  .category-bar-header {
+    flex-direction: column;
+    gap: 0.3rem;
+    align-items: flex-start;
+  }
+  
+  .category-bar-header span:first-child {
+    font-weight: 600;
+  }
+  
+  /* 标签云 - 更紧凑 */
+  .tag-cloud.enhanced {
+    gap: 0.4rem;
+    padding: 0.5rem 0;
+  }
+  
+  .cloud-tag {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.8rem;
+  }
+  
+  /* 知识列表卡片 */
+  .knowledge-card {
+    padding: 12px;
+  }
+  
+  .knowledge-card h3 {
+    font-size: 1rem;
+  }
+  
+  /* 搜索结果 */
+  .search-result {
+    padding: 10px;
+  }
+  
+  .result-header h4 {
+    font-size: 0.9rem;
+  }
+  
+  /* 快速操作按钮 - 垂直排列 */
+  .quick-actions {
+    display: flex !important;
+    flex-direction: column !important;
+    grid-template-columns: none !important;
+    gap: 8px;
+  }
+  
+  .quick-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  /* 详情页操作按钮 */
+  .detail-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .detail-actions .btn {
+    width: 100%;
+  }
+  
+  /* 图谱视图标题 */
+  .graph-view h2 {
+    font-size: 1.3rem;
+  }
+  
+  .graph-view .form-hint {
+    font-size: 0.8rem;
+  }
+  
+  /* 关联列表 */
+  .connections-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  
+  .connection-source,
+  .connection-target {
+    font-size: 0.85rem;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  .connection-similarity {
+    font-size: 0.7rem;
     align-self: center;
   }
 }
