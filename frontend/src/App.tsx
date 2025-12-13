@@ -397,12 +397,12 @@ function App() {
   }
 
   const handleAddKnowledge = async () => {
-    // 允许仅上传图片或仅输入文字
+    // 允许仅上传图片或仅输入文字或URL
     const hasContent = newContent.trim().length > 0
     const hasImages = uploadedImages.length > 0
     
     if (!hasContent && !hasImages) {
-      alert('请输入内容或上传图片')
+      alert('请输入内容、URL 或上传图片')
       return
     }
     
@@ -415,13 +415,31 @@ function App() {
         return match ? match[0] : url
       })
       
+      // 检测是否是 URL 输入
+      const trimmedContent = newContent.trim()
+      const urlPattern = /^https?:\/\/[^\s]+$/
+      const isUrlOnly = urlPattern.test(trimmedContent)
+      const isGitHubUrl = trimmedContent.includes('github.com')
+      
+      // 根据输入类型确定 source_type 和 source_url
+      let sourceType = 'manual'
+      let sourceUrl: string | null = null
+      
+      if (hasImages && !hasContent) {
+        sourceType = 'image'
+      } else if (isUrlOnly) {
+        sourceType = 'url'
+        sourceUrl = trimmedContent
+      }
+      
       const res = await fetch(`${API_BASE}/api/v1/knowledge/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           content: newContent,
           images: imagePathsForBackend,
-          source_type: hasImages && !hasContent ? 'image' : 'manual',
+          source_type: sourceType,
+          source_url: sourceUrl,
           auto_process: true 
         })
       })
@@ -745,7 +763,7 @@ function App() {
       <textarea
         value={newContent}
         onChange={(e) => setNewContent(e.target.value)}
-        placeholder="在此输入或粘贴文字内容...&#10;&#10;如果已上传截图，此处可留空"
+        placeholder="在此输入内容、URL 或粘贴文字...&#10;&#10;支持：GitHub 链接、网页 URL、文本内容&#10;如果已上传截图，此处可留空"
         rows={6}
         disabled={isLoading}
       />
@@ -773,7 +791,7 @@ function App() {
           onClick={handleAddKnowledge}
           disabled={isLoading || !canSubmit}
         >
-          {isLoading ? '🔄 AI 处理中...' : hasImages && !hasContent ? '🔍 分析图片' : '🧪 蒸馏知识'}
+          {isLoading ? '🔄 AI 处理中...' : hasImages && !hasContent ? '🔍 分析图片' : /^https?:\/\//.test(newContent.trim()) ? '🔗 分析链接' : '🧪 蒸馏知识'}
         </button>
         <button className="btn secondary" onClick={() => { navigateTo('dashboard'); setUploadedImages([]); }}>
           取消

@@ -161,9 +161,11 @@ class KnowledgeService:
         
         # Run multi-stage distillation pipeline
         # 多阶段处理会通过 Telegram 发送每个阶段的进度
+        # 现在支持 URL 自动抓取（GitHub、网页等）
         distilled = await distillation_pipeline.run(
             content=content_for_distill,
             images=knowledge.images if has_images else None,
+            source_url=knowledge.source_url,
             knowledge_id=knowledge.id
         )
         

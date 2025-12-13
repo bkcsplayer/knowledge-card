@@ -3,11 +3,12 @@ Knowledge Distillation Pipeline
 多阶段、多模型深度知识蒸馏系统
 
 流程：
-1. 提取阶段 (Extract) - 从原始内容/图片提取基础信息
-2. 分析阶段 (Analyze) - 深度理解内容结构和技术细节
-3. 搜索阶段 (Search) - 搜索相关信息补充上下文
-4. 验证阶段 (Verify) - 交叉验证关键信息
-5. 归纳阶段 (Synthesize) - 综合所有信息生成知识卡片
+1. 预处理 (Preprocess) - 检测输入类型，抓取 URL 内容
+2. 提取阶段 (Extract) - 从原始内容/图片提取基础信息
+3. 分析阶段 (Analyze) - 深度理解内容结构和技术细节
+4. 搜索阶段 (Search) - 搜索相关信息补充上下文
+5. 验证阶段 (Verify) - 交叉验证关键信息
+6. 归纳阶段 (Synthesize) - 综合所有信息生成知识卡片
 """
 
 import json
@@ -18,6 +19,7 @@ from datetime import datetime
 
 from services.ai_service import ai_service
 from services.telegram_service import get_telegram_service
+from services.url_service import url_service
 from config import settings
 
 logger = logging.getLogger(__name__)
@@ -48,6 +50,7 @@ class DistillationPipeline:
         self, 
         content: str = "", 
         images: Optional[List[str]] = None,
+        source_url: Optional[str] = None,
         knowledge_id: Optional[int] = None
     ) -> Dict[str, Any]:
         """
@@ -56,18 +59,53 @@ class DistillationPipeline:
         Args:
             content: 原始文本内容
             images: 图片路径列表
+            source_url: 来源 URL（如 GitHub 链接）
             knowledge_id: 知识条目ID（用于通知）
         
         Returns:
             完整的知识卡片数据
         """
         kid = knowledge_id or 0
+        url_data = None
+        
+        # ========== 预处理：检测并抓取 URL ==========
+        # 检测 content 中是否只包含 URL
+        detected_url = source_url
+        if not detected_url and content:
+            url_match = re.match(r'^\s*(https?://[^\s]+)\s*$', content.strip())
+            if url_match:
+                detected_url = url_match.group(1)
+                logger.info(f"Detected URL in content: {detected_url}")
+        
+        # 如果有 URL，先抓取内容
+        if detected_url:
+            await self._notify(f"🔗 #{kid} | 检测到 URL，正在抓取内容...\n{detected_url[:50]}...")
+            
+            try:
+                url_data = await url_service.fetch_url(detected_url)
+                
+                if url_data.get("success"):
+                    if url_data.get("type") == "github_repo":
+                        # GitHub 项目 - 使用丰富的格式化内容
+                        await self._notify(f"📦 #{kid} | GitHub 项目: {url_data.get('full_name')}\n⭐ {url_data.get('stars', 0):,} stars")
+                        content = url_service.format_github_for_distillation(url_data)
+                    else:
+                        # 普通网页
+                        await self._notify(f"🌐 #{kid} | 网页: {url_data.get('title', '')[:40]}")
+                        content = url_service.format_webpage_for_distillation(url_data)
+                else:
+                    await self._notify(f"⚠️ #{kid} | URL 抓取失败: {url_data.get('error', '未知错误')[:50]}")
+                    # 即使抓取失败，也保留原始 URL 作为内容
+                    content = f"URL: {detected_url}\n\n（注意：无法自动抓取内容，请手动提供更多信息）"
+            except Exception as e:
+                logger.error(f"URL fetch error: {e}")
+                await self._notify(f"⚠️ #{kid} | URL 处理异常")
         
         # 首先尝试简化版的单次蒸馏（更可靠）
         await self._notify(f"🧪 #{kid} | 开始 AI 知识蒸馏...")
         
         try:
-            result = await self._simple_distill(content, images, kid)
+            result = await self._simple_distill(content, images, kid, url_data)
             if result and not result.get("error"):
                 await self._notify(f"🎉 #{kid} | 蒸馏完成!\n📝 {result.get('title', '')[:50]}\n🏷️ {', '.join(result.get('tags', [])[:5])}")
                 return result
@@ -147,7 +185,13 @@ class DistillationPipeline:
                 "repo_url": (ext.get("detected_urls", []) or [None])[0]
             }
     
-    async def _simple_distill(self, content: str, images: Optional[List[str]], kid: int) -> Dict[str, Any]:
+    async def _simple_distill(
+        self, 
+        content: str, 
+        images: Optional[List[str]], 
+        kid: int,
+        url_data: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """
         简化版单次蒸馏 - 更可靠
         """
@@ -164,7 +208,53 @@ class DistillationPipeline:
         if not actual_content or len(actual_content.strip()) < 10:
             return {"error": "没有有效内容"}
         
-        prompt = """你是知识管理专家。请分析以下内容并生成知识卡片。
+        # 根据内容类型选择不同的提示词
+        is_github = url_data and url_data.get("type") == "github_repo"
+        
+        if is_github:
+            prompt = """你是技术架构师和开源项目分析专家。请深度分析这个 GitHub 项目。
+
+输出 JSON 格式：
+{
+    "title": "项目名 - 一句话描述核心价值",
+    "summary": "200-300字的全面摘要，包含：项目定位、核心功能、技术特点、适用场景、与竞品对比",
+    "key_points": [
+        "核心功能点1",
+        "核心功能点2", 
+        "技术亮点",
+        "使用场景",
+        "性能特点"
+    ],
+    "tags": ["主要技术栈", "应用领域", "项目类型"],
+    "category": "工具/框架/库/应用",
+    "difficulty": "入门/中级/高级",
+    "action_items": [
+        "快速上手步骤1",
+        "学习建议",
+        "进阶方向"
+    ],
+    "usage_example": "完整的使用示例代码，包含安装和基础用法",
+    "deployment_guide": "详细的部署/安装步骤",
+    "is_open_source": true,
+    "repo_url": "完整的 GitHub 仓库地址",
+    "pros_cons": {
+        "pros": ["优点1", "优点2", "优点3"],
+        "cons": ["局限1", "局限2"]
+    },
+    "prerequisites": ["前置知识1", "前置知识2"],
+    "related_projects": ["类似项目1", "类似项目2"],
+    "best_practices": ["最佳实践1", "最佳实践2"]
+}
+
+分析要求：
+1. **仓库地址必须完整正确**（格式：https://github.com/owner/repo）
+2. 基于 README 内容提取**真实的使用示例**，不要编造
+3. 分析项目的**技术架构和设计理念**
+4. 评估项目**成熟度**（star数、更新频率、issue处理）
+5. 提供**实际可用的部署步骤**
+6. 标签要精准，便于搜索（如：React, CLI, Docker, AI）"""
+        else:
+            prompt = """你是知识管理专家。请分析以下内容并生成知识卡片。
 
 输出 JSON 格式：
 {
@@ -189,7 +279,7 @@ class DistillationPipeline:
 
         messages = [
             {"role": "system", "content": prompt},
-            {"role": "user", "content": f"请分析以下内容：\n\n{actual_content[:4000]}"}
+            {"role": "user", "content": f"请分析以下内容：\n\n{actual_content[:6000]}"}
         ]
         
         result = await ai_service._call_api(messages, temperature=0.3)
@@ -198,11 +288,30 @@ class DistillationPipeline:
             return {"error": "AI 未返回结果"}
         
         try:
-            return self._parse_json(result)
+            parsed = self._parse_json(result)
+            
+            # 如果是 GitHub 项目，确保 repo_url 正确
+            if url_data and url_data.get("type") == "github_repo":
+                if not parsed.get("repo_url") or "github.com" not in str(parsed.get("repo_url", "")):
+                    parsed["repo_url"] = url_data.get("html_url") or url_data.get("url")
+                parsed["is_open_source"] = True
+                
+                # 添加更多元数据
+                if not parsed.get("tags"):
+                    parsed["tags"] = []
+                if url_data.get("language") and url_data.get("language") not in parsed["tags"]:
+                    parsed["tags"].insert(0, url_data.get("language"))
+                if url_data.get("topics"):
+                    for topic in url_data["topics"][:3]:
+                        if topic not in parsed["tags"]:
+                            parsed["tags"].append(topic)
+            
+            return parsed
+            
         except Exception as e:
             logger.error(f"Simple distill parse error: {e}")
             # 尝试从响应中提取有用信息
-            return {
+            fallback = {
                 "title": actual_content[:80],
                 "summary": actual_content[:300],
                 "key_points": [],
@@ -212,6 +321,18 @@ class DistillationPipeline:
                 "action_items": [],
                 "error": f"解析失败: {str(e)}"
             }
+            
+            # 即使解析失败，也要保留 GitHub 信息
+            if url_data and url_data.get("type") == "github_repo":
+                fallback["repo_url"] = url_data.get("html_url") or url_data.get("url")
+                fallback["is_open_source"] = True
+                fallback["title"] = url_data.get("full_name") or url_data.get("name") or fallback["title"]
+                fallback["summary"] = url_data.get("description") or fallback["summary"]
+                fallback["tags"] = url_data.get("topics", [])[:5]
+                if url_data.get("language"):
+                    fallback["tags"].insert(0, url_data.get("language"))
+            
+            return fallback
     
     async def _stage_extract(self, content: str, images: Optional[List[str]]) -> Dict[str, Any]:
         """

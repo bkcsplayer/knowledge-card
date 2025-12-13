@@ -23,6 +23,9 @@ email-validator==2.1.0  # Required for pydantic EmailStr validation
 # HTTP client for AI API calls
 httpx==0.27.0
 
+# Async HTTP client for URL fetching
+aiohttp==3.9.3
+
 # Vector operations
 numpy==1.26.4
 
